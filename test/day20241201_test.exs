@@ -6,6 +6,6 @@ defmodule AletopeltaTest.Day20241201 do
   end
 
   test "part2 is loaded" do
-    assert Aletopelta.Day20241201.Part2.execute() == 2
+    assert Aletopelta.Day20241201.Part2.execute() == 27267728
   end
 end
