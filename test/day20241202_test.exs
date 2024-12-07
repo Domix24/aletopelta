@@ -12,7 +12,7 @@ defmodule AletopeltaTest.Day20241202 do
   test "part1 is loaded" do
     input = FileReader.read_file_lines(@filename)
 
-    assert Aletopelta.Day20241202.Part1.execute(input) == 1
+    assert Aletopelta.Day20241202.Part1.execute(input) == 341
   end
 
   test "part2 is loaded" do
