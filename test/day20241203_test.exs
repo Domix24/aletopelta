@@ -3,7 +3,7 @@ defmodule AletopeltaTest.Day20241203 do
 
   defmodule FileReader do
     def read_file_lines(file_path) do
-      File.stream!(file_path) |> Enum.to_list() |> Enum.map(fn number_string -> String.split(number_string, ~r/\s+/) |> Enum.filter(&(String.length(&1)) > 0) end)
+      input = File.stream!(file_path) |> Enum.to_list() |> Enum.map(&String.trim_trailing(&1, "\n"))
     end
   end
 
@@ -12,7 +12,7 @@ defmodule AletopeltaTest.Day20241203 do
   test "part1 is loaded" do
     input = FileReader.read_file_lines(@filename)
 
-    assert Aletopelta.Day20241203.Part1.execute(input) == 1
+    assert Aletopelta.Day20241203.Part1.execute(input) == 165225049
   end
 
   test "part2 is loaded" do
