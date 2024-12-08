@@ -4,9 +4,15 @@ defmodule AletopeltaTest.Day20241204 do
   @filename "2024/day/4/input"
 
   defp get_input() do
-    result = elem(Tesla.get(AletopeltaTest.create_client(), @filename), 1).body
+    response = Tesla.get(AletopeltaTest.create_client(), @filename)
 
-    result |> String.split("\n")
+    case response do
+      {:ok, %Tesla.Env{status: 200, body: result}} -> result |> String.split("\n")
+      {:ok, %Tesla.Env{status: status_code}} ->
+        raise "Request failed with status code: #{status_code}"
+      {:error, reason} ->
+        raise "Request failed: #{inspect(reason)}"
+    end
   end
 
   test "part1 is loaded" do
