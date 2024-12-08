@@ -29,3 +29,8 @@ jobs:
 
             - name: Run tests
               run: mix test
+              env:
+                TESLA_COMPLETE_URL: ${{ secrets.TESLA_COMPLETE_URL }}
+                SESSION_TOKEN: ${{ secrets.SESSION_TOKEN }}
+                DAY20241204_PART_1: ${{ secrets.DAY20241204_PART_1 }}
+                DAY20241204_PART_2: ${{ secrets.DAY20241204_PART_2 }}
