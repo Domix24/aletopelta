@@ -6,12 +6,10 @@ defmodule AletopeltaTest.Day20241204 do
   defp get_input() do
     response = Tesla.get(AletopeltaTest.create_client(), @filename)
 
-    IO.inspect response
-
     case response do
       {:ok, %Tesla.Env{status: 200, body: result}} -> result |> String.split("\n")
-      {:ok, %Tesla.Env{status: status_code}} ->
-        raise "Request failed with status code: #{status_code}"
+      {:ok, %Tesla.Env{status: status_code, body: result}} ->
+        raise "Request failed with status code: #{status_code}, #{result}"
       {:error, reason} ->
         raise "Request failed: #{inspect(reason)}"
     end
