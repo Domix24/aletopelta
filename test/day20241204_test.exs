@@ -1,10 +1,12 @@
 defmodule AletopeltaTest.Day20241204 do
-  
   use AletopeltaTest.Custom
+
   @filename "2024/day/4/input"
 
   defp get_input() do
     response = Tesla.get(AletopeltaTest.create_client(), @filename)
+
+    IO.inspect response
 
     case response do
       {:ok, %Tesla.Env{status: 200, body: result}} -> result |> String.split("\n")
