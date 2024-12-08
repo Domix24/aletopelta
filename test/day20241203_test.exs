@@ -3,7 +3,7 @@ defmodule AletopeltaTest.Day20241203 do
 
   defmodule FileReader do
     def read_file_lines(file_path) do
-      input = File.stream!(file_path) |> Enum.to_list() |> Enum.map(&String.trim_trailing(&1, "\n"))
+      File.stream!(file_path) |> Enum.to_list() |> Enum.map(&String.trim_trailing(&1, "\n"))
     end
   end
 

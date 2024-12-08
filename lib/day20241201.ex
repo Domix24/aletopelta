@@ -4,7 +4,7 @@ defmodule Aletopelta.Day20241201 do
   defmodule Part1 do
     def execute do
       result = process_numbers(Aletopelta.Day20241201.get_number_list())
-      IO.inspect(result, label: "Result")
+
       result
     end
 
@@ -35,7 +35,7 @@ defmodule Aletopelta.Day20241201 do
   defmodule Part2 do
     def execute do
       result = process_numbers(Aletopelta.Day20241201.get_number_list())
-      IO.inspect(result, label: "Result")
+
       result
     end
     
