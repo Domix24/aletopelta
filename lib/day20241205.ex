@@ -1,4 +1,4 @@
-defmodule Aletopelta.Day202412x do 
+defmodule Aletopelta.Day20241205 do
   defmodule Common do
   end
 

@@ -7,3 +7,11 @@ config :aletopelta, :web,
 config :aletopelta, :day20241204,
   part1: System.get_env("DAY20241204_PART_1"),
   part2: System.get_env("DAY20241204_PART_2")
+
+config :aletopelta, :day20241205,
+  part1: System.get_env("DAY20241205_PART_1"),
+  part2: System.get_env("DAY20241205_PART_2")
+
+config :aletopelta, :day202412xx,
+  part1: System.get_env("DAY202412xx_PART_1"),
+  part2: System.get_env("DAY202412xx_PART_2")
