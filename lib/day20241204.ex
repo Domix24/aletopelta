@@ -68,6 +68,7 @@ defmodule Aletopelta.Day20241204 do
     defp follow_direction(chars, word, tail, :both, position) do
       follow_direction(chars, word, tail, :+, position) + follow_direction(chars, word, tail, :-, position)
     end
+    
     defp follow_direction(chars, word, tail, direction, position) do
       chars
       |> Enum.map(fn {_, i} -> adjust_index(i, direction) end)
@@ -77,6 +78,48 @@ defmodule Aletopelta.Day20241204 do
   end
 
   defmodule Part2 do
-    def execute(_input \\ nil), do: 2
+    def execute(input \\ nil) do
+      search_x(String.graphemes("MAS"), input)
+    end
+
+    defp search_x(_, [_, _]), do: 0
+    defp search_x([first_letter, middle_letter, last_letter], [layer1, layer2, layer3 | rest]) do
+      middle_letter_positions = layer2
+      |> String.graphemes
+      |> Enum.with_index
+      |> Enum.filter(fn {letter, _} -> middle_letter == letter end)
+      
+      result = if Enum.count(middle_letter_positions) > 0 do
+        middle_letter_positions
+        |> Enum.map(&check_positions(&1, first_letter, last_letter, layer1, layer3))
+        |> Enum.sum()
+      else
+        0
+      end
+
+      result + search_x([first_letter, middle_letter, last_letter], [layer2, layer3 | rest])
+    end
+
+    defp check_positions({_, middle_index}, first_letter, last_letter, layer1, layer3) do
+      top_positions = get_positions(layer1, middle_index, first_letter, last_letter)
+      bottom_positions = get_positions(layer3, middle_index, first_letter, last_letter)
+
+      combined_positions = top_positions
+      |> Enum.filter(fn {top_letter, bottom_letter} -> count_bottom_matches(bottom_positions, top_letter, bottom_letter) == 1 end)
+
+      if Enum.count(combined_positions) == 2, do: 1, else: 0
+    end
+
+    defp get_positions(layer, middle_index, first_letter, last_letter) do
+      layer
+      |> String.graphemes
+      |> Enum.with_index
+      |> Enum.filter(fn {letter, index} -> (letter == first_letter or letter == last_letter) and abs(index - middle_index) == 1 end)
+    end
+
+    defp count_bottom_matches(bottom_positions, top_letter, top_index) do
+      bottom_positions
+      |> Enum.count(fn {bottom_letter, bottom_index} -> bottom_index != top_index and bottom_letter != top_letter end)
+    end
   end
 end
