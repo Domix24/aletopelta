@@ -1,6 +1,6 @@
 defmodule AletopeltaTest.Day20241204 do
-  use ExUnit.Case
   
+  use AletopeltaTest.Custom
   @filename "2024/day/4/input"
 
   defp get_input() do
