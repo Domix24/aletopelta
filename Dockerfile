@@ -1,6 +1,6 @@
 FROM elixir:alpine
 
-WORKDIR /usr/bin/aletepelta
+WORKDIR /usr/bin/aletopelta
 
 COPY . .
 
