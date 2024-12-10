@@ -36,5 +36,7 @@ jobs:
                 DAY20241204_PART_2: ${{ secrets.DAY20241204_PART_2 }}
                 DAY20241205_PART_1: ${{ secrets.DAY20241205_PART_1 }}
                 DAY20241205_PART_2: ${{ secrets.DAY20241205_PART_2 }}
+                DAY20241206_PART_1: ${{ secrets.DAY20241206_PART_1 }}
+                DAY20241206_PART_2: ${{ secrets.DAY20241206_PART_2 }}
                 DAY202412xx_PART_1: ${{ secrets.DAY202412xx_PART_1 }}
                 DAY202412xx_PART_2: ${{ secrets.DAY202412xx_PART_2 }}
