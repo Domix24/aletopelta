@@ -15,9 +15,6 @@ defmodule Aletopelta.Day20241207 do
       end)
     end
 
-    defp process_line(goal, [first, second, _third | _rest], :+) when first + second >= goal, do: 0
-    defp process_line(goal, [first, second, _third | _rest], :*) when first * second >= goal, do: 0
-
     defp process_line(goal, [first, second], :+) when first + second == goal, do: goal
     defp process_line(goal, [first, second], :*) when first * second == goal, do: goal
 
