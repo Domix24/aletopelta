@@ -1,8 +1,5 @@
 defmodule Aletopelta.Day20241209 do
   defmodule Common do
-  end
-
-  defmodule Part1 do
     defmodule FileSpace do
       defstruct [:id, :size]
     end
@@ -24,24 +21,37 @@ defmodule Aletopelta.Day20241209 do
       def type(_), do: :empty
     end
 
-    def execute(input \\ nil) do
-      input
-      |> Enum.join
-      |> String.graphemes
-      |> identify_spaces
-      |> compact_spaces
-      |> calculate_checksum
-    end
-
-    defp identify_spaces(graphemes, file_id \\ 0)
-    defp identify_spaces([], _file_id), do: []
-    defp identify_spaces([file_size, free_size | rest], file_id) do
+    def identify_spaces(graphemes, file_id \\ 0)
+    def identify_spaces([], _file_id), do: []
+    def identify_spaces([file_size, free_size | rest], file_id) do
       [%FileSpace{id: file_id, size: String.to_integer(file_size)}]
       ++ [%EmptySpace{size: String.to_integer(free_size)}]
       ++ identify_spaces(rest, file_id + 1)
     end
-    defp identify_spaces([file_size], file_id) do
+    def identify_spaces([file_size], file_id) do
       [%FileSpace{id: file_id, size: String.to_integer(file_size)}]
+    end
+
+    def calculate_checksum([block | _] = list), do: calculate_checksum(list, block.size, 0)
+    def calculate_checksum([%EmptySpace{} = empty, block2 | rest], _, index), do: 0 + calculate_checksum([block2 | rest], block2.size, index + empty.size)
+    def calculate_checksum([%EmptySpace{}], _, _), do: 0
+    def calculate_checksum([_, block2 | rest], 0, index), do: calculate_checksum([block2 | rest], block2.size, index)
+    def calculate_checksum([block | _] = list, block_size, index), do: block.id * index + calculate_checksum(list, block_size - 1, index + 1)
+
+  end
+
+  defmodule Part1 do
+    alias Common.EmptySpace
+    alias Common.FileSpace
+    alias Common.SpaceType
+
+    def execute(input \\ nil) do
+      input
+      |> Enum.join
+      |> String.graphemes
+      |> Common.identify_spaces
+      |> compact_spaces
+      |> Common.calculate_checksum
     end
 
     defp compact_spaces(spaces) do
@@ -70,8 +80,6 @@ defmodule Aletopelta.Day20241209 do
       compact_spaces(new_list, count_spaces(new_list))
     end
 
-    defp get_last_file_index(rest), do: length(rest) - 1 - Enum.find_index(Enum.reverse(rest), &(SpaceType.type(&1) == :file))
-
     defp update_last_file(rest) do
       last_file_index = get_last_file_index(rest)
       {Enum.at(rest, last_file_index), List.delete_at(rest, last_file_index)}
@@ -89,14 +97,59 @@ defmodule Aletopelta.Day20241209 do
       end)
     end
 
-    defp calculate_checksum([block | _] = list), do: calculate_checksum(list, block.size, 0)
-    defp calculate_checksum([%EmptySpace{}, block2 | rest], _, index), do: 0 + calculate_checksum([block2 | rest], block2.size, index)
-    defp calculate_checksum([%EmptySpace{}], _, _), do: 0
-    defp calculate_checksum([_, block2 | rest], 0, index), do: calculate_checksum([block2 | rest], block2.size, index)
-    defp calculate_checksum([block | _] = list, block_size, index), do: block.id * index + calculate_checksum(list, block_size - 1, index + 1)
+    defp get_last_file_index(rest), do: length(rest) - 1 - Enum.find_index(Enum.reverse(rest), &(SpaceType.type(&1) == :file))
   end
 
   defmodule Part2 do
-    def execute(_input \\ nil), do: 2
+    alias Common.EmptySpace
+    alias Common.FileSpace
+
+    def execute(input \\ nil) do
+      input
+      |> Enum.join
+      |> String.graphemes
+      |> Common.identify_spaces
+      |> compact_spaces
+      |> Common.calculate_checksum
+    end
+
+    defp compact_spaces([space]), do: [space]
+    defp compact_spaces([%FileSpace{} = space | rest]), do: [space | compact_spaces(rest)]
+    defp compact_spaces([%EmptySpace{} = space | rest] = list), do: compact_space_with_fitting(list, find_fitting_file(Enum.reverse(rest), space.size))
+
+    defp compact_space_with_fitting([%EmptySpace{} = empty | rest], nil), do: [empty | compact_spaces(rest)]
+    defp compact_space_with_fitting([%EmptySpace{} = empty | rest], %FileSpace{} = file) when file.size == empty.size do
+      rest = rest
+      |> List.replace_at(
+        rest
+        |> Enum.find_index(fn
+           %FileSpace{id: id} -> id == file.id
+           _ -> false
+        end),
+        %EmptySpace{size: file.size}
+      )
+
+      [file | compact_spaces(rest)]
+    end
+    defp compact_space_with_fitting([%EmptySpace{} = empty | rest], %FileSpace{} = file) do
+      rest = rest
+      |> List.replace_at(
+        rest
+        |> Enum.find_index(fn
+          %FileSpace{id: id} -> id == file.id
+          _ -> false
+        end),
+        %EmptySpace{size: file.size}
+      )
+
+      empty = %EmptySpace{size: empty.size - file.size}
+
+      [file | compact_spaces([empty | rest])]
+    end
+    defp find_fitting_file(_, 0), do: nil
+    defp find_fitting_file([%EmptySpace{} | rest], size), do: find_fitting_file(rest, size)
+    defp find_fitting_file([], _), do: nil
+    defp find_fitting_file([%FileSpace{} = space | rest], size) when space.size > size, do: find_fitting_file(rest, size)
+    defp find_fitting_file([%FileSpace{} = space | _], _), do: space
   end
 end

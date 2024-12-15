@@ -11,7 +11,6 @@ defmodule AletopeltaTest.Day20241206 do
     assert Aletopelta.Day20241206.Part1.execute(input) == String.to_integer(Application.get_env(:aletopelta, :day20241206)[:part1])
   end
 
-  @tag timeout: :infinity
   test "part2 is loaded" do
     input = get_input!()
 
