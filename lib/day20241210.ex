@@ -1,9 +1,6 @@
 defmodule Aletopelta.Day20241210 do
   defmodule Common do
-  end
-
-  defmodule Part1 do
-    def execute(input \\ nil) do
+    def parse_input(input) do
       map = input
       |> Enum.filter(&(&1 != ""))
       |> to_number
@@ -15,24 +12,7 @@ defmodule Aletopelta.Day20241210 do
       |> Enum.at(0)
       |> length
 
-      map_info = {map_length, map_width}
-
-      map
-      |> search_for_zeros
-      |> build_path(map, map_info)
-      |> Enum.map(fn list ->
-        list
-        |> Enum.flat_map(fn sublist ->
-          sublist
-          |> Enum.filter(fn
-            {_, _, 9} -> true
-            _ -> false
-          end)
-        end)
-        |> Enum.uniq
-        |> Enum.count
-      end)
-      |> Enum.sum
+      {map, map_length, map_width}
     end
 
     defp to_number([], 1) do
@@ -61,33 +41,33 @@ defmodule Aletopelta.Day20241210 do
       [first_numbers | other_numbers]
     end
 
-    defp search_for_zeros([first_line | other_lines]) do
+    def search_for_zeros([first_line | other_lines]) do
       search_for_zeros([first_line | other_lines], 0)
       |> Enum.flat_map(&(&1))
     end
-    defp search_for_zeros([], _) do
+    def search_for_zeros([], _) do
       []
     end
-    defp search_for_zeros([first_line | other_lines], row_index) do
+    def search_for_zeros([first_line | other_lines], row_index) do
       first_zeros = search_for_zeros(first_line, row_index, 0)
       other_zeros = search_for_zeros(other_lines, row_index + 1)
 
       [first_zeros | other_zeros]
     end
-    defp search_for_zeros([0 | other_chars], row_index, column_index) do
+    def search_for_zeros([0 | other_chars], row_index, column_index) do
       [{column_index, row_index, 0} | search_for_zeros(other_chars, row_index, column_index + 1)]
     end
-    defp search_for_zeros([_ | other_chars], row_index, column_index) do
+    def search_for_zeros([_ | other_chars], row_index, column_index) do
       search_for_zeros(other_chars, row_index, column_index + 1)
     end
-    defp search_for_zeros([], _, _) do
+    def search_for_zeros([], _, _) do
       []
     end
 
-    defp build_path({_, _, 9} = starting_point, _, _) do
+    def build_path({_, _, 9} = starting_point, _, _) do
       [[starting_point]]
     end
-    defp build_path({_x, _y, n} = starting_point, map, map_info) do
+    def build_path({_x, _y, n} = starting_point, map, map_info) do
       [{0, -1}, {1, 0}, {0, 1}, {-1, 0}]
       |> Enum.map(fn delta ->
         next_point = get_next_point(starting_point, delta, map, map_info)
@@ -103,10 +83,10 @@ defmodule Aletopelta.Day20241210 do
         [starting_point | rest_build_path]
       end)
     end
-    defp build_path([], _, _) do
+    def build_path([], _, _) do
       []
     end
-    defp build_path([{_x, _y, 0} = starting_point | other_points], map, map_info) do
+    def build_path([{_x, _y, 0} = starting_point | other_points], map, map_info) do
       [build_path(starting_point, map, map_info) | build_path(other_points, map, map_info)]
     end
 
@@ -124,7 +104,54 @@ defmodule Aletopelta.Day20241210 do
     end
   end
 
+  defmodule Part1 do
+    def execute(input \\ nil) do
+     {map, map_length, map_width} = input
+     |> Common.parse_input
+
+      map_info = {map_length, map_width}
+
+      map
+      |> Common.search_for_zeros
+      |> Common.build_path(map, map_info)
+      |> Enum.map(fn list ->
+        list
+        |> Enum.flat_map(fn sublist ->
+          sublist
+          |> Enum.filter(fn
+            {_, _, 9} -> true
+            _ -> false
+          end)
+        end)
+        |> Enum.uniq
+        |> Enum.count
+      end)
+      |> Enum.sum
+    end
+  end
+
   defmodule Part2 do
-    def execute(_input \\ nil), do: 2
+    def execute(input \\ nil) do
+     {map, map_length, map_width} = input
+     |> Common.parse_input
+
+      map_info = {map_length, map_width}
+
+      map
+      |> Common.search_for_zeros
+      |> Common.build_path(map, map_info)
+      |> Enum.map(fn list ->
+        list
+        |> Enum.map(fn sublist ->
+          sublist
+          |> Enum.count(fn
+            {_, _, 9} -> true
+            _ -> false
+          end)
+        end)
+        |> Enum.sum
+      end)
+      |> Enum.sum
+    end
   end
 end
