@@ -1,8 +1,5 @@
 defmodule Aletopelta.Day20241214 do
   defmodule Common do
-  end
-
-  defmodule Part1 do
     defmodule Position do
       defstruct [:x, :y]
     end
@@ -15,7 +12,7 @@ defmodule Aletopelta.Day20241214 do
       defstruct [:position, :velocity, :quadrant]
     end
 
-    defmodule MapInfo do
+    defmodule Dimensions do
       defstruct [:height, :width]
     end
 
@@ -25,17 +22,8 @@ defmodule Aletopelta.Day20241214 do
 
     @pattern_pv ~r/p=(\d+),(\d+) v=([-+]?\d+),([-+]?\d+)/
 
-    def execute(input \\ nil) do
-      map = %MapInfo{height: 103, width: 101}
-      input
-      |> parse_lines
-      |> simulate(map, 100)
-      |> assign_quadrants(map)
-      |> Enum.reduce(1, fn {_, count}, acc -> acc * count end)
-    end
-
-    defp parse_lines([]), do: []
-    defp parse_lines([line | rest]) do
+    def parse_lines([]), do: []
+    def parse_lines([line | rest]) do
       line = line
       |> parse_line
 
@@ -58,9 +46,9 @@ defmodule Aletopelta.Day20241214 do
       %Robot{position: %Position{x: px, y: py}, velocity: %Velocity{x: vx, y: vy}}
     end
 
-    defp simulate([], _, _), do: []
+    def simulate([], _, _), do: []
 
-    defp simulate([first | rest], map, simulations) do
+    def simulate([first | rest], map, simulations) do
       first = update_position(first, map, simulations)
       [first | simulate(rest, map, simulations)]
     end
@@ -73,6 +61,17 @@ defmodule Aletopelta.Day20241214 do
 
     defp calculate_coordinate(position, velocity, simulations, limit) do
       rem(rem(position + velocity * simulations, limit) + limit, limit)
+    end
+  end
+
+  defmodule Part1 do
+    def execute(input \\ nil) do
+      map = %Common.Dimensions{height: 103, width: 101}
+      input
+      |> Common.parse_lines
+      |> Common.simulate(map, 100)
+      |> assign_quadrants(map)
+      |> Enum.reduce(1, fn {_, count}, acc -> acc * count end)
     end
 
     defp assign_quadrants(robots, map) do
@@ -99,15 +98,40 @@ defmodule Aletopelta.Day20241214 do
 
     defp define_quadrants(map) do
       [
-        %Quadrant{topleft: %Position{x: -1, y: -1}, bottomright: %Position{x: div(map.width, 2), y: div(map.height, 2)}},
-        %Quadrant{topleft: %Position{x: div(map.width, 2), y: -1}, bottomright: %Position{x: map.width, y: div(map.height, 2)}},
-        %Quadrant{topleft: %Position{x: -1, y: div(map.height, 2)}, bottomright: %Position{x: div(map.width, 2), y: map.height}},
-        %Quadrant{topleft: %Position{x: div(map.width, 2), y: div(map.height, 2)}, bottomright: %Position{x: map.width, y: map.height }}
+        %Common.Quadrant{topleft: %Common.Position{x: -1, y: -1}, bottomright: %Common.Position{x: div(map.width, 2), y: div(map.height, 2)}},
+        %Common.Quadrant{topleft: %Common.Position{x: div(map.width, 2), y: -1}, bottomright: %Common.Position{x: map.width, y: div(map.height, 2)}},
+        %Common.Quadrant{topleft: %Common.Position{x: -1, y: div(map.height, 2)}, bottomright: %Common.Position{x: div(map.width, 2), y: map.height}},
+        %Common.Quadrant{topleft: %Common.Position{x: div(map.width, 2), y: div(map.height, 2)}, bottomright: %Common.Position{x: map.width, y: map.height }}
       ]
     end
   end
 
   defmodule Part2 do
-    def execute(_input \\ nil), do: 2
+    def execute(input \\ nil) do
+      map = %Common.Dimensions{height: 103, width: 101}
+      input
+      |> Common.parse_lines
+      |> run_simulations(map)
+    end
+
+    defp run_simulations(robots, map) do
+      robots
+      |> run_simulations(map, 0)
+    end
+
+    defp run_simulations(robots, map, step) do
+      case simulate(robots, map, step) do
+        true -> robots
+        |> run_simulations(map, step + 1)
+        false -> step
+      end
+    end
+
+    defp simulate(robots, map, step) do
+      robots
+      |> Common.simulate(map, step)
+      |> Enum.group_by(&(&1.position), &(&1))
+      |> Enum.any?(fn {_, robots} -> length(robots) > 1 end)
+    end
   end
 end
