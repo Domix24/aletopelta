@@ -44,18 +44,16 @@ defmodule Aletopelta.Day20241216 do
         _ -> nil
       end)
 
-      {score, path} = find_path(map, start_position, end_position)
-      draw_path(map, path)
-      score
+      find_path(map, start_position, end_position)
     end
 
     defp find_path(map, start_position, end_position) do
-      do_find(map, [{[start_position], 0, :east}], end_position, %{})
+      do_find(map, [{start_position, 0, :east}], end_position, %{})
     end
 
-    defp do_find(map, [{[current_position | _] = positions, score, direction} | _] = queue, end_position, visited) do
+    defp do_find(map, [{current_position, score, direction} | _] = queue, end_position, visited) do
       if current_position == end_position do
-        {score, positions}
+        score
       else
         sides = get_sides(map, current_position, direction)
         queue = append_sides(sides, queue, visited)
@@ -72,14 +70,14 @@ defmodule Aletopelta.Day20241216 do
       |> Enum.filter(fn {pos, _} -> Map.get(map, pos) != "#" end)
     end
 
-    defp append_sides(sides, [{positions, score, last_direction} | rest], visited) do
+    defp append_sides(sides, [{_, score, last_direction} | rest], visited) do
       Enum.reduce(sides, rest, fn {position, direction}, acc ->
         score = score + if direction == last_direction, do: 1, else: 1001
 
         if Map.has_key?(visited, {position, direction}) do
           acc
         else
-          [{[position | positions], score, direction} | acc]
+          [{position, score, direction} | acc]
         end
       end)
       |> Enum.sort_by(&elem(&1, 1))
