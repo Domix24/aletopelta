@@ -1,4 +1,6 @@
 defmodule Aletopelta.Day20241217 do
+  import Bitwise
+
   defmodule Common do
   end
 
