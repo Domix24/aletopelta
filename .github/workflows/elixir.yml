@@ -11,7 +11,7 @@ jobs:
 
         strategy:
             matrix:
-                elixir: [latest]
+                elixir: ["1.18.0"] # replace with latest
                 otp: [latest]
 
         steps:
