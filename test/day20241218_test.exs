@@ -14,6 +14,6 @@ defmodule AletopeltaTest.Day20241218 do
   test "part2 is loaded" do
     input = get_input!()
 
-    assert Aletopelta.Day20241218.Part2.execute(input) == String.to_integer(Application.get_env(:aletopelta, :day20241218)[:part2])
+    assert Aletopelta.Day20241218.Part2.execute(input) == Application.get_env(:aletopelta, :day20241218)[:part2]
   end
 end
