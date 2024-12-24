@@ -60,5 +60,9 @@ jobs:
                 DAY20241216_PART_2: ${{ secrets.DAY20241216_PART_2 }}
                 DAY20241217_PART_1: ${{ secrets.DAY20241217_PART_1 }}
                 DAY20241217_PART_2: ${{ secrets.DAY20241217_PART_2 }}
+                DAY20241218_PART_1: ${{ secrets.DAY20241218_PART_1 }}
+                DAY20241218_PART_2: ${{ secrets.DAY20241218_PART_2 }}
+                DAY20241219_PART_1: ${{ secrets.DAY20241219_PART_1 }}
+                DAY20241219_PART_2: ${{ secrets.DAY20241219_PART_2 }}
                 DAY202412xx_PART_1: ${{ secrets.DAY202412xx_PART_1 }}
                 DAY202412xx_PART_2: ${{ secrets.DAY202412xx_PART_2 }}
