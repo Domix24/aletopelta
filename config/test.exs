@@ -68,6 +68,10 @@ config :aletopelta, :day20241219,
   part1: System.get_env("DAY20241219_PART_1"),
   part2: System.get_env("DAY20241219_PART_2")
 
+config :aletopelta, :day20241220,
+  part1: System.get_env("DAY20241220_PART_1"),
+  part2: System.get_env("DAY20241220_PART_2")
+
 config :aletopelta, :day202412xx,
   part1: System.get_env("DAY202412xx_PART_1"),
   part2: System.get_env("DAY202412xx_PART_2")
