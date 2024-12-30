@@ -1,29 +1,31 @@
 defmodule Aletopelta.Day20241221 do
   defmodule Common do
-  end
+    def parse_input(input) do
+      input |> Enum.reject(& &1 == "")
+    end
 
-  defmodule Part1 do
-    def execute(input \\ nil) do
-      codes = parse_input(input)
-
-      numberpad = %{
+    defp get_number_pad do
+      %{
         {0, 0} => "7", {1, 0} => "8", {2, 0} => "9",
         {0, 1} => "4", {1, 1} => "5", {2, 1} => "6",
         {0, 2} => "1", {1, 2} => "2", {2, 2} => "3",
                        {1, 3} => "0", {2, 3} => "A",
       } |> Map.new(fn {position, key} -> {key, position} end)
+    end
 
-      arrowpad = %{
+    defp get_arrow_pad do
+      %{
                        {1, 0} => "^", {2, 0} => "A",
         {0, 1} => "<", {1, 1} => "v", {2, 1} => ">",
       } |> Map.new(fn {position, key} -> {key, position} end)
+    end
 
-      codes
-      |> Enum.map(&get_path(&1, numberpad))
-      |> Enum.map(&get_path(&1, arrowpad))
-      |> Enum.map(&get_path(&1, arrowpad))
-      |> Enum.map(&calculate_complexity/1)
-      |> Enum.sum
+    def handle_complexity(code, count) do
+      code
+      |> get_path(get_number_pad())
+      |> group_sequence
+      |> process_arrow_pad(count, code)
+      |> calculate_complexity
     end
 
     defp calculate_complexity({code, path}) do
@@ -45,10 +47,49 @@ defmodule Aletopelta.Day20241221 do
       {x1, y1} = Map.get(pad, first_character)
       {x2, y2} = Map.get(pad, second_character)
 
-      direction = {first_character, get_vertical(y1, y2), get_horizontal(x1, x2)} |> make_valid
-      direction = {{first_character, second_character}, direction} |> prioritize
+      [get_horizontal(x1, x2), get_vertical(y1, y2)]
+      |> prioritize
+      |> make_valid({first_character, second_character})
+      |> Enum.reject(fn {_, count} -> count == 0 end)
+      |> join_press(second_count, get_shortest([second | others], pad))
+    end
 
-      join_press(direction, second_count, get_shortest([second | others], pad))
+    defp group_sequence({_, signs}) do
+      group_sequence(signs, "", %{})
+    end
+
+    defp group_sequence([], "", map), do: map
+    defp group_sequence([{"A", 0} | others], sequence, map), do: group_sequence(others, sequence, map)
+
+    defp group_sequence([{"A", count} | others], sequence, map) do
+      sequence = sequence <> "A"
+      map = Map.update(map, sequence, 1, &(&1 + 1))
+      group_sequence([{"A", count - 1} | others], "", map)
+    end
+
+    defp group_sequence([{sign, count} | others], sequence, map) do
+      sign_sequence = for _ <- 1..count, do: [sign]
+      sequence = sequence <> (sign_sequence |> Enum.join)
+      group_sequence(others, sequence, map)
+    end
+
+   defp process_arrow_pad(sequence_group, 0, code) do
+     path = Enum.flat_map(sequence_group, fn {longsign, frequence} ->
+       String.graphemes(longsign)
+       |> Enum.map(&{&1, frequence})
+     end)
+     {code, path}
+   end
+
+    defp process_arrow_pad(sequence_group, loop_index, code) do
+      Enum.reduce(sequence_group, %{}, fn {key, tvalue}, acc ->
+        get_path(key, get_arrow_pad())
+        |> group_sequence
+        |> Enum.reduce(acc, fn {key, value}, acc ->
+          Map.update(acc, key, value * tvalue, & &1 + value * tvalue)
+        end)
+      end)
+      |> process_arrow_pad(loop_index - 1, code)
     end
 
     defp join_press(first_list, increment, [{"A", n} | second_list]), do: first_list ++ [{"A", increment + n} | second_list]
@@ -60,30 +101,41 @@ defmodule Aletopelta.Day20241221 do
     defp get_vertical(y1, y2) when y1 > y2, do: {"^", y1 - y2}
     defp get_vertical(y1, y2)             , do: {"v", y2 - y1}
 
-    defp make_valid({"<", {"^", n} = vertical, horizontal}) when n > 0, do: [horizontal, vertical]
-    defp make_valid({"1", {"v", n} = vertical, horizontal}) when n > 0, do: [horizontal, vertical]
-    defp make_valid({"4", {"v", n} = vertical, horizontal}) when n > 1, do: [horizontal, vertical]
-    defp make_valid({"7", {"v", n} = vertical, horizontal}) when n > 2, do: [horizontal, vertical]
-    defp make_valid({_, {_, 0}, {_, 0}}), do: []
-    defp make_valid({_, vertical, {_, 0}}), do: [vertical]
-    defp make_valid({_, {_, 0}, horizontal}), do: [horizontal]
-    defp make_valid({_, vertical, horizontal}), do: [vertical, horizontal]
+    defp prioritize([{">", _} = horizontal, vertical]), do: [vertical, horizontal]
+    defp prioritize([horizontal, vertical]), do: [horizontal, vertical]
 
-    defp prioritize({{f, "7"}, [vertical, horizontal]}) when f in ["2", "3", "5", "6"], do: [horizontal, vertical]
-    defp prioritize({{f, "8"}, [vertical, horizontal]}) when f in ["A", "3", "6"], do: [horizontal, vertical]
-    defp prioritize({{f, "4"}, [vertical, horizontal]}) when f in ["2", "3", "8", "9"], do: [horizontal, vertical]
-    defp prioritize({{f, "5"}, [vertical, horizontal]}) when f in ["A", "3", "9"], do: [horizontal, vertical]
-    defp prioritize({{f, "1"}, [vertical, horizontal]}) when f in ["5", "6", "8", "9"], do: [horizontal, vertical]
-    defp prioritize({{f, "2"}, [vertical, horizontal]}) when f in ["A", "7", "9"], do: [horizontal, vertical]
-    defp prioritize({{f, "^"}, [vertical, horizontal]}) when f in [">"], do: [horizontal, vertical]
-    defp prioritize({_, direction}), do: direction
+    defp make_valid([direction1, direction2], {"7", "A"}), do: [direction2, direction1]
+    defp make_valid([direction1, direction2], {"4", "A"}), do: [direction2, direction1]
+    defp make_valid([direction1, direction2], {"1", "A"}), do: [direction2, direction1]
+    defp make_valid([direction1, direction2], {"7", "0"}), do: [direction2, direction1]
+    defp make_valid([direction1, direction2], {"4", "0"}), do: [direction2, direction1]
+    defp make_valid([direction1, direction2], {"1", "0"}), do: [direction2, direction1]
+    defp make_valid([direction1, direction2], {"0", "7"}), do: [direction2, direction1]
+    defp make_valid([direction1, direction2], {"0", "4"}), do: [direction2, direction1]
+    defp make_valid([direction1, direction2], {"0", "1"}), do: [direction2, direction1]
+    defp make_valid([direction1, direction2], {"A", "7"}), do: [direction2, direction1]
+    defp make_valid([direction1, direction2], {"A", "4"}), do: [direction2, direction1]
+    defp make_valid([direction1, direction2], {"A", "1"}), do: [direction2, direction1]
+    defp make_valid([direction1, direction2], {"^", "<"}), do: [direction2, direction1]
+    defp make_valid([direction1, direction2], {"A", "<"}), do: [direction2, direction1]
+    defp make_valid([direction1, direction2], {"<", "^"}), do: [direction2, direction1]
+    defp make_valid([direction1, direction2], {"<", "A"}), do: [direction2, direction1]
+    defp make_valid([direction1, direction2], {_fr, _t}), do: [direction1, direction2]
+  end
 
-    defp parse_input(input) do
-      input |> Enum.reject(& &1 == "")
+  defmodule Part1 do
+    def execute(input \\ nil) do
+      Common.parse_input(input)
+      |> Enum.map(&Common.handle_complexity(&1, 2))
+      |> Enum.sum
     end
   end
 
   defmodule Part2 do
-    def execute(_input \\ nil), do: 2
+    def execute(input \\ nil) do
+      Common.parse_input(input)
+      |> Enum.map(&Common.handle_complexity(&1, 25))
+      |> Enum.sum
+    end
   end
 end
