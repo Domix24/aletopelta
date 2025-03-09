@@ -11,15 +11,18 @@ defmodule Aletopelta.Year2024.Day20 do
     end
 
     def get_cheats([{cidx, {cx, cy}} | rest], cheat, save) do
-      count = Enum.drop(rest, save + 1)
-      |> Enum.reduce(0, fn {idx, {x, y}}, count ->
-        dist = abs(cx - x) + abs(cy - y)
-        if dist <= cheat and idx - cidx >= save + dist do
-          count + 1
-        else
-          count
-        end
-      end)
+      count =
+        Enum.drop(rest, save + 1)
+        |> Enum.reduce(0, fn {idx, {x, y}}, count ->
+          dist = abs(cx - x) + abs(cy - y)
+
+          if dist <= cheat and idx - cidx >= save + dist do
+            count + 1
+          else
+            count
+          end
+        end)
+
       count + get_cheats(rest, cheat, save)
     end
 
@@ -32,39 +35,44 @@ defmodule Aletopelta.Year2024.Day20 do
     end
 
     defp follow_path(grid, start, finish, [{idx, {lastx, lasty}} | _] = path, passed) do
-      [newpos] = [{lastx + 1, lasty}, {lastx, lasty + 1}, {lastx - 1, lasty}, {lastx, lasty - 1}]
-      |> Enum.filter(fn pos -> Map.has_key?(grid, pos) and pos != passed end)
+      [newpos] =
+        [{lastx + 1, lasty}, {lastx, lasty + 1}, {lastx - 1, lasty}, {lastx, lasty - 1}]
+        |> Enum.filter(fn pos -> Map.has_key?(grid, pos) and pos != passed end)
 
       follow_path(grid, start, finish, [{idx + 1, newpos} | path], {lastx, lasty})
     end
 
     def parse_input(input) do
-      {grid, meta} = Enum.with_index(input)
-      |> Enum.reduce({[], %{}}, fn {line, row_index}, {acc_grid, acc_meta} ->
-        {line_result, line_meta} = parse_line(line, row_index, 0)
-        {[line_result | acc_grid], Map.merge(acc_meta, line_meta)}
-      end)
+      {grid, meta} =
+        Enum.with_index(input)
+        |> Enum.reduce({[], %{}}, fn {line, row_index}, {acc_grid, acc_meta} ->
+          {line_result, line_meta} = parse_line(line, row_index, 0)
+          {[line_result | acc_grid], Map.merge(acc_meta, line_meta)}
+        end)
 
       {Map.new(:lists.flatten(grid), fn pos -> {pos, true} end), meta}
     end
 
     defp parse_line(<<>>, _, _), do: {[], %{}}
+
     defp parse_line(<<c::utf8, rest::binary>>, row, column) do
       coord = {column, row}
       character_result = parse_character(c)
 
-      updated_meta = case character_result do
-        :start -> %{start: coord}
-        :finish -> %{finish: coord}
-        _ -> %{}
-      end
+      updated_meta =
+        case character_result do
+          :start -> %{start: coord}
+          :finish -> %{finish: coord}
+          _ -> %{}
+        end
 
       {line_result, line_meta} = parse_line(rest, row, column + 1)
 
-      result = case character_result do
-        :nothing -> line_result
-        _ -> [coord | line_result]
-      end
+      result =
+        case character_result do
+          :nothing -> line_result
+          _ -> [coord | line_result]
+        end
 
       {result, Map.merge(updated_meta, line_meta)}
     end

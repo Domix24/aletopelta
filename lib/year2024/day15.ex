@@ -8,7 +8,7 @@ defmodule Aletopelta.Year2024.Day15 do
     """
     defp build_map(map_data) do
       Enum.reduce(map_data, %{}, fn {coordinate, value}, acc ->
-        Map.put(acc, coordinate, value == :player && :empty || value)
+        Map.put(acc, coordinate, (value == :player && :empty) || value)
       end)
     end
 
@@ -21,10 +21,12 @@ defmodule Aletopelta.Year2024.Day15 do
 
     def parse_input(lines, func) do
       parsed_data = Enum.with_index(lines) |> Enum.flat_map(&parse_line(&1, func))
-      {map_data, directions} = Enum.split_with(parsed_data, fn
-        {{_, _}, _} -> true
-        _ -> false
-      end)
+
+      {map_data, directions} =
+        Enum.split_with(parsed_data, fn
+          {{_, _}, _} -> true
+          _ -> false
+        end)
 
       map = build_map(map_data)
       {map, directions, find_player_position(map_data)}
@@ -32,8 +34,8 @@ defmodule Aletopelta.Year2024.Day15 do
 
     defp parse_line({line, row_index}, func) do
       line
-      |> String.graphemes
-      |> Enum.with_index
+      |> String.graphemes()
+      |> Enum.with_index()
       |> Enum.map(&map_character(&1, row_index, func))
       |> Enum.reject(&is_nil/1)
     end
@@ -101,8 +103,12 @@ defmodule Aletopelta.Year2024.Day15 do
           else
             {player, map}
           end
-        :empty -> {new_position, map}
-        _ -> {player, map}
+
+        :empty ->
+          {new_position, map}
+
+        _ ->
+          {player, map}
       end
     end
 
@@ -123,10 +129,13 @@ defmodule Aletopelta.Year2024.Day15 do
       case Map.get(map, new_position) do
         :object ->
           push_objects(map, new_position, delta, [position | positions])
+
         :empty ->
           Enum.reduce(positions, map, fn pos, acc -> Map.put(acc, pos, :object) end)
           |> Map.put(new_position, :object)
-        _ -> map
+
+        _ ->
+          map
       end
     end
   end
@@ -153,26 +162,45 @@ defmodule Aletopelta.Year2024.Day15 do
       case Map.get(map, new_position) do
         x when x in [:leftobject, :rightobject] ->
           object_list = build_object_list(map, new_position, delta)
+
           if can_move?(object_list) do
-             {new_position, push_objects(map, object_list, delta)}
+            {new_position, push_objects(map, object_list, delta)}
           else
-             {player, map}
+            {player, map}
           end
-        :wall -> {player, map}
-        :empty -> {new_position, map}
+
+        :wall ->
+          {player, map}
+
+        :empty ->
+          {new_position, map}
       end
     end
 
     defp build_object_list(map, position, delta) do
       case Map.get(map, position) do
-        :leftobject -> build_object_entries(map, position, delta, :east, :leftobject, :rightobject)
-        :rightobject -> build_object_entries(map, position, delta, :west, :rightobject, :leftobject)
-        :wall -> [{position, :wall}]
-        _ -> []
+        :leftobject ->
+          build_object_entries(map, position, delta, :east, :leftobject, :rightobject)
+
+        :rightobject ->
+          build_object_entries(map, position, delta, :west, :rightobject, :leftobject)
+
+        :wall ->
+          [{position, :wall}]
+
+        _ ->
+          []
       end
     end
 
-    defp build_object_entries(map, {x, y} = position, {dx, dy} = delta, direction, primary_type, secondary_type) do
+    defp build_object_entries(
+           map,
+           {x, y} = position,
+           {dx, dy} = delta,
+           direction,
+           primary_type,
+           secondary_type
+         ) do
       {ddx, ddy} = Common.get_delta(direction)
       adjacent_position = {x + ddx, y + ddy}
       new_primary_position = {x + dx, y + dy}
@@ -182,13 +210,13 @@ defmodule Aletopelta.Year2024.Day15 do
 
       case delta do
         {0, _} ->
-          entries
-          ++
-          build_object_list(map, new_primary_position, delta) ++ build_object_list(map, new_adjacent_position, delta)
+          entries ++
+            build_object_list(map, new_primary_position, delta) ++
+            build_object_list(map, new_adjacent_position, delta)
+
         {_, 0} ->
-          entries
-          ++
-          build_object_list(map, new_primary_position, delta)
+          entries ++
+            build_object_list(map, new_primary_position, delta)
       end
     end
 
@@ -197,11 +225,12 @@ defmodule Aletopelta.Year2024.Day15 do
     end
 
     defp push_objects(map, objects, {dx, dy}) do
-      {emptied_map, new_positions} = objects
-      |> Enum.reduce({map, []}, fn {{old_x, old_y}, type}, {acc_map, acc_positions} ->
-        new_position = {old_x + dx, old_y + dy}
-        {Map.put(acc_map, {old_x, old_y}, :empty), [{new_position, type} | acc_positions]}
-      end)
+      {emptied_map, new_positions} =
+        objects
+        |> Enum.reduce({map, []}, fn {{old_x, old_y}, type}, {acc_map, acc_positions} ->
+          new_position = {old_x + dx, old_y + dy}
+          {Map.put(acc_map, {old_x, old_y}, :empty), [{new_position, type} | acc_positions]}
+        end)
 
       Enum.reduce(new_positions, emptied_map, fn {new_position, type}, acc_map ->
         Map.put(acc_map, new_position, type)
@@ -214,7 +243,7 @@ defmodule Aletopelta.Year2024.Day15 do
 
     defp scale_line(line) do
       line
-      |> String.graphemes
+      |> String.graphemes()
       |> Enum.map_join(&scale_character(&1))
     end
 

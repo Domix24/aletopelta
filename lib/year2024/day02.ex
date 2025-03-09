@@ -31,13 +31,15 @@ defmodule Aletopelta.Year2024.Day02 do
       chunks = Enum.chunk_every(numbers, 2, 1, :discard)
       direction_check = determine_direction(Enum.at(numbers, 0), Enum.at(numbers, 1))
 
-      has_conflicting_signs = chunks |> Enum.any?(&(direction_check.(Enum.at(&1, 0), Enum.at(&1, 1))))
+      has_conflicting_signs =
+        chunks |> Enum.any?(&direction_check.(Enum.at(&1, 0), Enum.at(&1, 1)))
 
-      has_conflicting_signs = if has_conflicting_signs do
-        has_conflicting_signs
-      else
-        Enum.any?(chunks, &has_invalid_difference?/1)
-      end
+      has_conflicting_signs =
+        if has_conflicting_signs do
+          has_conflicting_signs
+        else
+          Enum.any?(chunks, &has_invalid_difference?/1)
+        end
 
       if has_conflicting_signs, do: "unsafe", else: "safe"
     end
@@ -67,22 +69,27 @@ defmodule Aletopelta.Year2024.Day02 do
       chunks = Enum.chunk_every(numbers, 2, 1, :discard)
       direction_check = determine_direction(Enum.at(numbers, 0), Enum.at(numbers, 1))
 
-      has_conflicting_signs = chunks |> Enum.any?(&(direction_check.(Enum.at(&1, 0), Enum.at(&1, 1))))
+      has_conflicting_signs =
+        chunks |> Enum.any?(&direction_check.(Enum.at(&1, 0), Enum.at(&1, 1)))
 
-      has_conflicting_signs = if has_conflicting_signs do
-        has_conflicting_signs
-      else
-        Enum.any?(chunks, &has_invalid_difference?/1)
-      end
+      has_conflicting_signs =
+        if has_conflicting_signs do
+          has_conflicting_signs
+        else
+          Enum.any?(chunks, &has_invalid_difference?/1)
+        end
 
       if has_conflicting_signs, do: "unsafe", else: "safe"
     end
 
     defp evaluate_safety(numbers) do
       case assess_safety(numbers) do
-        "safe" -> "safe"
+        "safe" ->
+          "safe"
+
         "unsafe" ->
-          safety_result = numbers
+          safety_result =
+            numbers
             |> Enum.with_index()
             |> Enum.map(fn {_, index} ->
               {updated_left, [_ | updated_right]} = Enum.split(numbers, index)

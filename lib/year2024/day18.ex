@@ -37,17 +37,26 @@ defmodule Aletopelta.Year2024.Day18 do
       valid_neighbors =
         queue
         |> Enum.flat_map(&neighboring_points/1)
-        |> Enum.uniq
+        |> Enum.uniq()
         |> Enum.filter(&valid_point?(&1, visited_nodes, map_data, boundary))
 
-      if end_point in valid_neighbors, do: throw {:found, depth}
+      if end_point in valid_neighbors, do: throw({:found, depth})
 
       updated_visited_nodes = update_visited_nodes(visited_nodes, valid_neighbors)
-      search_loop(map_data, end_point, boundary, valid_neighbors, updated_visited_nodes, depth + 1)
+
+      search_loop(
+        map_data,
+        end_point,
+        boundary,
+        valid_neighbors,
+        updated_visited_nodes,
+        depth + 1
+      )
     end
 
     defp valid_point?({x, y} = xy, visited_nodes, map_data, boundary) do
-      x in boundary and y in boundary and not Map.has_key?(visited_nodes, xy) and Map.get(map_data, xy) == nil
+      x in boundary and y in boundary and not Map.has_key?(visited_nodes, xy) and
+        Map.get(map_data, xy) == nil
     end
 
     defp neighboring_points({x, y}) do
@@ -55,7 +64,7 @@ defmodule Aletopelta.Year2024.Day18 do
         {x + 0, y + 1},
         {x + 1, y + 0},
         {x + 0, y - 1},
-        {x - 1, y + 0},
+        {x - 1, y + 0}
       ]
     end
 
@@ -92,14 +101,16 @@ defmodule Aletopelta.Year2024.Day18 do
       max_boundary = Enum.max(boundary)
       boundary_tuple = {{0, 0}, {max_boundary, max_boundary}}
 
-      future_maps = Stream.scan(future, base_map, fn coord, acc ->
-        Map.merge(acc, Common.create_map([coord]))
-      end)
+      future_maps =
+        Stream.scan(future, base_map, fn coord, acc ->
+          Map.merge(acc, Common.create_map([coord]))
+        end)
 
       future_maps_map = Stream.zip(future, Enum.to_list(future_maps)) |> Enum.into(%{})
 
       search_fn = fn coord ->
         new_map = Map.get(future_maps_map, coord)
+
         case Common.search_path(new_map, boundary_tuple, boundary) do
           {:error, _} -> {true, coord}
           _ -> {false, coord}
@@ -121,9 +132,12 @@ defmodule Aletopelta.Year2024.Day18 do
     defp find(max, comparator) do
       find(0, max, comparator, nil)
     end
-    defp find(min, max, _, coord) when max <= min, do: throw coord
+
+    defp find(min, max, _, coord) when max <= min, do: throw(coord)
+
     defp find(min, max, comparator, _) do
       value = div(min + max, 2)
+
       case comparator.(value) do
         {:lt, coord} -> find(min, value - 1, comparator, coord)
         {:gt, coord} -> find(value + 1, max, comparator, coord)

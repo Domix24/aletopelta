@@ -16,7 +16,7 @@ defmodule Aletopelta.Year2024.Day13 do
       if valid_solution?({a_x, a_y}, {b_x, b_y}, {x, y}, {r_x, r_y}), do: {x, y}, else: {0, 0}
     end
 
-    def linearize([first | rest]), do: [linearize(first) |linearize(rest)]
+    def linearize([first | rest]), do: [linearize(first) | linearize(rest)]
 
     defp solve_equation({a_x, a_y}, {b_x, b_y}, {r_x, r_y}) do
       x = div(r_y * b_x - r_x * b_y, a_y * b_x - a_x * b_y)
@@ -30,12 +30,15 @@ defmodule Aletopelta.Year2024.Day13 do
 
     def parse_input(input), do: parse_input(input, [])
     def parse_input([], state), do: [state]
+
     def parse_input([_ | rest], state) when length(state) > 2 do
       [state] ++ parse_input(rest, [])
     end
+
     def parse_input([first | rest], state) do
-      state = first
-      |> parse_line(state)
+      state =
+        first
+        |> parse_line(state)
 
       rest
       |> parse_input(state)
@@ -76,9 +79,9 @@ defmodule Aletopelta.Year2024.Day13 do
     """
     def execute(input) do
       input
-      |> Common.parse_input
-      |> Common.linearize
-      |> Common.calculate_sum
+      |> Common.parse_input()
+      |> Common.linearize()
+      |> Common.calculate_sum()
     end
   end
 
@@ -88,10 +91,10 @@ defmodule Aletopelta.Year2024.Day13 do
     """
     def execute(input) do
       input
-      |> Common.parse_input
+      |> Common.parse_input()
       |> increment_results
-      |> Common.linearize
-      |> Common.calculate_sum
+      |> Common.linearize()
+      |> Common.calculate_sum()
     end
 
     defp increment_results(input, increment \\ 10_000_000_000_000) do

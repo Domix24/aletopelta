@@ -7,201 +7,219 @@ defmodule Aletopelta.Year2023.Day20 do
     Common part for Day 20
     """
     def parse_input(input) do
-      {broadcaster, flipflops, conjunctions} = Enum.reduce(input, %{}, fn line, map ->
-        [name, _ | others] = String.split line, [",", " "], trim: true
-        others = Enum.map others, &String.to_atom/1
+      {broadcaster, flipflops, conjunctions} =
+        Enum.reduce(input, %{}, fn line, map ->
+          [name, _ | others] = String.split(line, [",", " "], trim: true)
+          others = Enum.map(others, &String.to_atom/1)
 
-        case name do
-          "broadcaster" ->
-            Map.put map, :broadcaster, others
+          case name do
+            "broadcaster" ->
+              Map.put(map, :broadcaster, others)
 
-          "%" <> rest ->
-            Map.put map, {:flipflop, String.to_atom rest}, {:off, others}
+            "%" <> rest ->
+              Map.put(map, {:flipflop, String.to_atom(rest)}, {:off, others})
 
-          "&" <> rest ->
-            Map.put map, {:conjunction, String.to_atom rest}, {:low, others}
-        end
-      end) |> split
+            "&" <> rest ->
+              Map.put(map, {:conjunction, String.to_atom(rest)}, {:low, others})
+          end
+        end)
+        |> split
 
-      {conjunctions, flipflops} = connect_input conjunctions, flipflops
+      {conjunctions, flipflops} = connect_input(conjunctions, flipflops)
 
       {broadcaster, flipflops, conjunctions}
     end
 
-    defp split map do
-      Enum.reduce map, {nil, %{}, %{}}, fn
+    defp split(map) do
+      Enum.reduce(map, {nil, %{}, %{}}, fn
         {:broadcaster, modules}, {_, flipflops, conjunctions} ->
-          modules = identify map, modules
+          modules = identify(map, modules)
 
           {modules, flipflops, conjunctions}
 
         {{:flipflop, name}, {state, modules}}, {broadcaster, flipflops, conjunctions} ->
-          modules = identify map, modules
-          flipflops = Map.put flipflops, name, {state, [], modules}
+          modules = identify(map, modules)
+          flipflops = Map.put(flipflops, name, {state, [], modules})
 
           {broadcaster, flipflops, conjunctions}
 
         {{:conjunction, name}, {state, modules}}, {broadcaster, flipflops, conjunctions} ->
-          modules = identify map, modules
-          conjunctions = Map.put conjunctions, name, {state, [], modules}
+          modules = identify(map, modules)
+          conjunctions = Map.put(conjunctions, name, {state, [], modules})
 
           {broadcaster, flipflops, conjunctions}
-      end
+      end)
     end
 
-    defp identify map, modules do
-      Enum.map modules, fn module ->
+    defp identify(map, modules) do
+      Enum.map(modules, fn module ->
         cond do
-          Map.has_key? map, {:flipflop, module} ->
+          Map.has_key?(map, {:flipflop, module}) ->
             {:flipflop, module}
 
-          Map.has_key? map, {:conjunction, module} ->
+          Map.has_key?(map, {:conjunction, module}) ->
             {:conjunction, module}
 
           module in [:output, :rx] ->
             {:special, module}
         end
-      end
+      end)
     end
 
-    defp connect_input conjunctions, flipflops do
-      complete = Map.merge conjunctions, flipflops
-      {result, flipflops, _} = Enum.reduce conjunctions, {%{}, flipflops, conjunctions}, fn {name, {state, _, modules}}, {result, flipflops, conjunctions} ->
-        {inputs, flipflops, conjunctions} = Enum.reduce complete, {%{}, flipflops, conjunctions}, fn
-          {^name, _}, acc ->
-            acc
+    defp connect_input(conjunctions, flipflops) do
+      complete = Map.merge(conjunctions, flipflops)
 
-          {module, {_, _, modules}}, acc ->
-            find_link modules, acc, name, module, state
-        end
+      {result, flipflops, _} =
+        Enum.reduce(conjunctions, {%{}, flipflops, conjunctions}, fn {name, {state, _, modules}},
+                                                                     {result, flipflops,
+                                                                      conjunctions} ->
+          {inputs, flipflops, conjunctions} =
+            Enum.reduce(complete, {%{}, flipflops, conjunctions}, fn
+              {^name, _}, acc ->
+                acc
 
-        result = Map.put result, name, {state, inputs, modules}
-        {result, flipflops, conjunctions}
-      end
+              {module, {_, _, modules}}, acc ->
+                find_link(modules, acc, name, module, state)
+            end)
+
+          result = Map.put(result, name, {state, inputs, modules})
+          {result, flipflops, conjunctions}
+        end)
 
       {result, flipflops}
     end
 
-    defp find_link modules, acc, name, module, state do
-      Enum.reduce modules, acc, fn
+    defp find_link(modules, acc, name, module, state) do
+      Enum.reduce(modules, acc, fn
         {:conjunction, ^name}, {result, flipflops, conjunctions} ->
-          {flipflops, conjunctions} = update_table flipflops, conjunctions, module, name
+          {flipflops, conjunctions} = update_table(flipflops, conjunctions, module, name)
 
-          result = Map.put result, module, state
+          result = Map.put(result, module, state)
           {result, flipflops, conjunctions}
 
-       _, acc ->
-         acc
-      end
+        _, acc ->
+          acc
+      end)
     end
 
-    defp update_table flipflops, conjunctions, module, name do
+    defp update_table(flipflops, conjunctions, module, name) do
       cond do
-        Map.has_key? flipflops, module ->
-          flipflops = update_flipflops flipflops, module, name
+        Map.has_key?(flipflops, module) ->
+          flipflops = update_flipflops(flipflops, module, name)
           {flipflops, conjunctions}
 
-        Map.has_key? conjunctions, module ->
-          conjunctions = update_conjunctions conjunctions, module, name
+        Map.has_key?(conjunctions, module) ->
+          conjunctions = update_conjunctions(conjunctions, module, name)
           {flipflops, conjunctions}
       end
     end
 
-    defp update_flipflops flipflops, module, name do
-      Map.update! flipflops, module, fn {state, links, modules} ->
+    defp update_flipflops(flipflops, module, name) do
+      Map.update!(flipflops, module, fn {state, links, modules} ->
         links = [name | links]
         {state, links, modules}
-      end
+      end)
     end
 
-    defp update_conjunctions conjunctions, module, name do
-      Map.update! conjunctions, module, fn {state, links, modules} ->
+    defp update_conjunctions(conjunctions, module, name) do
+      Map.update!(conjunctions, module, fn {state, links, modules} ->
         links = [name | links]
         {state, links, modules}
-      end
+      end)
     end
 
-    def process [], {flipflops, conjunctions}, [], count, wrote, _ do
+    def process([], {flipflops, conjunctions}, [], count, wrote, _) do
       {flipflops, conjunctions, count, wrote}
     end
-    def process [], {flipflops, conjunctions}, next_modules, count, wrote, links do
-      count = Enum.reduce next_modules, count, fn
-        {:low, _, _}, {high, low} -> {high, low + 1}
-        {:high, _, _}, {high, low} -> {high + 1, low}
-      end
-      process next_modules, {flipflops, conjunctions}, [], count, wrote, links
+
+    def process([], {flipflops, conjunctions}, next_modules, count, wrote, links) do
+      count =
+        Enum.reduce(next_modules, count, fn
+          {:low, _, _}, {high, low} -> {high, low + 1}
+          {:high, _, _}, {high, low} -> {high + 1, low}
+        end)
+
+      process(next_modules, {flipflops, conjunctions}, [], count, wrote, links)
     end
-    def process [module | modules], {flipflops, conjunctions}, next_modules, count, wrote, links do
-      wrote = case module do
-        {:high, {_, _}, source}  ->
-          if source in links do
-            ["#{source}" | wrote]
-          else
-            wrote
-          end
 
-        _ ->
-          wrote
-      end
-
-      {flipflops, conjunctions, next_modules} = case module do
-        {:low, {:flipflop, name}, _} ->
-          {{state, _, modules}, flipflops} = Map.get_and_update! flipflops, name, fn
-            {:off, links, modules} = current -> {current, {:on, links, modules}}
-            {:on, links, modules} = current -> {current, {:off, links, modules}}
-          end
-
-          append = case state do
-            :off ->
-              toggle_modules modules, name, :high
-            :on ->
-              toggle_modules modules, name, :low
-          end
-
-          next_modules = next_modules ++ append
-
-          {flipflops, conjunctions, next_modules}
-
-        {:high, {:flipflop, _}, _} ->
-          {flipflops, conjunctions, next_modules}
-
-        {state, {:conjunction, name}, source} ->
-          {{_, memory, modules}, conjunctions} =
-            Map.get_and_update! conjunctions, name, fn {sub_state, links, modules} ->
-              links = Map.put links, source, state
-              new_value = {sub_state, links, modules}
-
-              {new_value, new_value}
+    def process([module | modules], {flipflops, conjunctions}, next_modules, count, wrote, links) do
+      wrote =
+        case module do
+          {:high, {_, _}, source} ->
+            if source in links do
+              ["#{source}" | wrote]
+            else
+              wrote
             end
 
-          state = Enum.any?(memory, fn
-            {_, :low} -> true
-            {_, :high} -> false
-          end) |> case do
-            true -> :high
-            false -> :low
-          end
+          _ ->
+            wrote
+        end
 
-          append = Enum.map modules, fn module ->
-            {state, module, name}
-          end
+      {flipflops, conjunctions, next_modules} =
+        case module do
+          {:low, {:flipflop, name}, _} ->
+            {{state, _, modules}, flipflops} =
+              Map.get_and_update!(flipflops, name, fn
+                {:off, links, modules} = current -> {current, {:on, links, modules}}
+                {:on, links, modules} = current -> {current, {:off, links, modules}}
+              end)
 
-          next_modules = next_modules ++ append
+            append =
+              case state do
+                :off ->
+                  toggle_modules(modules, name, :high)
 
-          {flipflops, conjunctions, next_modules}
+                :on ->
+                  toggle_modules(modules, name, :low)
+              end
 
-        {_, {:special, _}, _} ->
-          {flipflops, conjunctions, next_modules}
+            next_modules = next_modules ++ append
 
-       end
+            {flipflops, conjunctions, next_modules}
 
-       process modules, {flipflops, conjunctions}, next_modules, count, wrote, links
+          {:high, {:flipflop, _}, _} ->
+            {flipflops, conjunctions, next_modules}
+
+          {state, {:conjunction, name}, source} ->
+            {{_, memory, modules}, conjunctions} =
+              Map.get_and_update!(conjunctions, name, fn {sub_state, links, modules} ->
+                links = Map.put(links, source, state)
+                new_value = {sub_state, links, modules}
+
+                {new_value, new_value}
+              end)
+
+            state =
+              Enum.any?(memory, fn
+                {_, :low} -> true
+                {_, :high} -> false
+              end)
+              |> case do
+                true -> :high
+                false -> :low
+              end
+
+            append =
+              Enum.map(modules, fn module ->
+                {state, module, name}
+              end)
+
+            next_modules = next_modules ++ append
+
+            {flipflops, conjunctions, next_modules}
+
+          {_, {:special, _}, _} ->
+            {flipflops, conjunctions, next_modules}
+        end
+
+      process(modules, {flipflops, conjunctions}, next_modules, count, wrote, links)
     end
 
-    defp toggle_modules modules, name, state do
-      Enum.map modules, fn module ->
+    defp toggle_modules(modules, name, state) do
+      Enum.map(modules, fn module ->
         {state, module, name}
-      end
+      end)
     end
   end
 
@@ -214,12 +232,21 @@ defmodule Aletopelta.Year2023.Day20 do
       |> push_button(1000)
     end
 
-    defp push_button {broadcaster, flipflops, conjunctions}, count do
-      initial_pulse = Enum.map broadcaster, &{:low, &1, :broadcaster}
+    defp push_button({broadcaster, flipflops, conjunctions}, count) do
+      initial_pulse = Enum.map(broadcaster, &{:low, &1, :broadcaster})
       initial_count = length(initial_pulse) + 1
 
-      Enum.reduce(1..count//1, {flipflops, conjunctions, {0, 0}, 0}, fn _, {flipflops, conjunctions, {high, low}, _} ->
-        Common.process initial_pulse, {flipflops, conjunctions}, [], {high, low + initial_count}, [], []
+      Enum.reduce(1..count//1, {flipflops, conjunctions, {0, 0}, 0}, fn _,
+                                                                        {flipflops, conjunctions,
+                                                                         {high, low}, _} ->
+        Common.process(
+          initial_pulse,
+          {flipflops, conjunctions},
+          [],
+          {high, low + initial_count},
+          [],
+          []
+        )
       end)
       |> then(fn {_, _, {high, low}, _} -> high * low end)
     end
@@ -234,20 +261,32 @@ defmodule Aletopelta.Year2023.Day20 do
       |> push_button(1000 * 5)
     end
 
-    defp push_button {broadcaster, flipflops, conjunctions}, count do
-      initial_pulse = Enum.map broadcaster, &{:low, &1, :broadcaster}
+    defp push_button({broadcaster, flipflops, conjunctions}, count) do
+      initial_pulse = Enum.map(broadcaster, &{:low, &1, :broadcaster})
       initial_count = length(initial_pulse) + 1
 
-      links = Enum.find_value conjunctions, fn
-        {_, {_, links, [special: :rx]}} -> Map.keys links
-        _ -> false
-      end
+      links =
+        Enum.find_value(conjunctions, fn
+          {_, {_, links, [special: :rx]}} -> Map.keys(links)
+          _ -> false
+        end)
 
-      Enum.reduce_while(1..count//1, {flipflops, conjunctions, {0, 0}, []}, fn index, {flipflops, conjunctions, {high, low}, wrote} ->
+      Enum.reduce_while(1..count//1, {flipflops, conjunctions, {0, 0}, []}, fn index,
+                                                                               {flipflops,
+                                                                                conjunctions,
+                                                                                {high, low},
+                                                                                wrote} ->
         {flipflops, conjunctions, _, wroting} =
-          Common.process initial_pulse, {flipflops, conjunctions}, [], {high, low + initial_count}, [], links
+          Common.process(
+            initial_pulse,
+            {flipflops, conjunctions},
+            [],
+            {high, low + initial_count},
+            [],
+            links
+          )
 
-        wroting = Enum.map wroting, &{&1, index}
+        wroting = Enum.map(wroting, &{&1, index})
 
         case wroting do
           [] ->
@@ -255,23 +294,26 @@ defmodule Aletopelta.Year2023.Day20 do
 
           [wroting] ->
             wrote = [wroting | wrote]
-            dispatch_wrote length(wrote), wrote, flipflops, conjunctions
+            dispatch_wrote(length(wrote), wrote, flipflops, conjunctions)
         end
-      end) |> then(fn {_, _, _, write} -> calculate_least write end)
+      end)
+      |> then(fn {_, _, _, write} -> calculate_least(write) end)
     end
 
-    defp dispatch_wrote 4, wrote, _, _ do
+    defp dispatch_wrote(4, wrote, _, _) do
       {:halt, {0, 0, {0, 0}, wrote}}
     end
-    defp dispatch_wrote _, wrote, flipflops, conjunctions do
+
+    defp dispatch_wrote(_, wrote, flipflops, conjunctions) do
       {:cont, {flipflops, conjunctions, {0, 0}, wrote}}
     end
 
-    defp calculate_least [{_, number}] do
+    defp calculate_least([{_, number}]) do
       number
     end
-    defp calculate_least [{_, number} | others] do
-      lcm number, calculate_least others
+
+    defp calculate_least([{_, number} | others]) do
+      lcm(number, calculate_least(others))
     end
 
     defp gcd(0, 0), do: 0
@@ -279,6 +321,6 @@ defmodule Aletopelta.Year2023.Day20 do
     defp gcd(a, b) when a > b, do: gcd(a - b, b)
     defp gcd(a, b), do: gcd(a, b - a)
 
-    defp lcm(a, b), do: (a * b) / gcd(a, b)
+    defp lcm(a, b), do: a * b / gcd(a, b)
   end
 end

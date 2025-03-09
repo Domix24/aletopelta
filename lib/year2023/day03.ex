@@ -26,20 +26,23 @@ defmodule Aletopelta.Year2023.Day03 do
       end
     end
 
-    def get_next({x, y})  do
-      [{x + 1, y - 1},
-       {x + 1, y + 0},
-       {x + 1, y + 1},
-       {x + 0, y + 1},
-       {x - 1, y + 1},
-       {x - 1, y - 0},
-       {x - 1, y - 1},
-       {x - 0, y - 1}]
+    def get_next({x, y}) do
+      [
+        {x + 1, y - 1},
+        {x + 1, y + 0},
+        {x + 1, y + 1},
+        {x + 0, y + 1},
+        {x - 1, y + 1},
+        {x - 1, y - 0},
+        {x - 1, y - 1},
+        {x - 0, y - 1}
+      ]
     end
 
     def merge_similar(positions) do
       merge_similar(positions, :y)
     end
+
     defp merge_similar(positions, :y) do
       Enum.group_by(positions, &elem(&1, 1))
       |> Enum.flat_map(fn
@@ -49,8 +52,12 @@ defmodule Aletopelta.Year2023.Day03 do
             x1 - 1 == x2 -> [{x2, y}]
             true -> group
           end
-        {y, [{x1, _}, {x2, _}, {x3, _}]} -> [{min(x1, min(x2, x3)), y}]
-        {_, group} -> group
+
+        {y, [{x1, _}, {x2, _}, {x3, _}]} ->
+          [{min(x1, min(x2, x3)), y}]
+
+        {_, group} ->
+          group
       end)
     end
 
@@ -59,6 +66,7 @@ defmodule Aletopelta.Year2023.Day03 do
       |> Enum.map(&find_number(&1, input, :x1))
       |> Enum.map(&String.to_integer/1)
     end
+
     defp find_number({x, y}, input, :x1) do
       if match?({:number, _}, Map.get(input, {x - 1, y})) do
         find_number({x - 1, y}, input, :x1)
@@ -66,6 +74,7 @@ defmodule Aletopelta.Year2023.Day03 do
         "#{elem(Map.get(input, {x, y}), 1)}#{find_number({x, y}, input, :x2)}"
       end
     end
+
     defp find_number({x, y}, input, :x2) do
       if match?({:number, _}, Map.get(input, {x + 1, y})) do
         "#{elem(Map.get(input, {x + 1, y}), 1)}#{find_number({x + 1, y}, input, :x2)}"
@@ -82,7 +91,7 @@ defmodule Aletopelta.Year2023.Day03 do
     def execute(input) do
       Common.parse_input(input)
       |> find_part
-      |> Enum.sum
+      |> Enum.sum()
     end
 
     defp find_part(input) do
@@ -90,7 +99,7 @@ defmodule Aletopelta.Year2023.Day03 do
       |> Enum.flat_map(fn {key, _} ->
         Common.get_next(key)
         |> Enum.filter(&match?({:number, _}, Map.get(input, &1)))
-        |> Common.merge_similar
+        |> Common.merge_similar()
         |> Common.find_number(input)
       end)
     end
@@ -103,7 +112,7 @@ defmodule Aletopelta.Year2023.Day03 do
     def execute(input) do
       Common.parse_input(input)
       |> find_part
-      |> Enum.sum
+      |> Enum.sum()
     end
 
     defp find_part(input) do
@@ -111,7 +120,7 @@ defmodule Aletopelta.Year2023.Day03 do
       |> Enum.flat_map(fn {key, _} ->
         Common.get_next(key)
         |> Enum.filter(&match?({:number, _}, Map.get(input, &1)))
-        |> Common.merge_similar
+        |> Common.merge_similar()
         |> keep_two
         |> Common.find_number(input)
         |> multiply

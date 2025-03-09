@@ -56,15 +56,16 @@ defmodule Aletopelta.Year2024.Day16 do
     end
 
     def parse_input([first | rest], row_index) do
-      line = first
-      |> parse_line(row_index)
+      line =
+        first
+        |> parse_line(row_index)
 
       line ++ parse_input(rest, row_index + 1)
     end
 
     defp parse_line(line, row_index) do
       line
-      |> String.graphemes
+      |> String.graphemes()
       |> Enum.with_index(&{{&2, row_index}, &1})
     end
   end
@@ -75,20 +76,22 @@ defmodule Aletopelta.Year2024.Day16 do
     """
     def execute(input) do
       input
-      |> Common.parse_input
+      |> Common.parse_input()
       |> do_tracking
     end
 
     defp do_tracking(map) do
-      start_position = Enum.find_value(map, fn
-        {position, "S"} -> position
-        _ -> nil
-      end)
+      start_position =
+        Enum.find_value(map, fn
+          {position, "S"} -> position
+          _ -> nil
+        end)
 
-      end_position = Enum.find_value(map, fn
-        {position, "E"} -> position
-        _ -> nil
-      end)
+      end_position =
+        Enum.find_value(map, fn
+          {position, "E"} -> position
+          _ -> nil
+        end)
 
       find_path(map, start_position, end_position)
     end
@@ -97,7 +100,12 @@ defmodule Aletopelta.Year2024.Day16 do
       do_find(map, [{[start_position], 0, :east}], end_position, %{})
     end
 
-    defp do_find(map, [{[current_position | _], score, direction} | _] = queue, end_position, visited) do
+    defp do_find(
+           map,
+           [{[current_position | _], score, direction} | _] = queue,
+           end_position,
+           visited
+         ) do
       if current_position == end_position do
         score
       else
@@ -116,20 +124,22 @@ defmodule Aletopelta.Year2024.Day16 do
     """
     def execute(input) do
       input
-      |> Common.parse_input
+      |> Common.parse_input()
       |> do_tracking
     end
 
     defp do_tracking(map) do
-      start_position = Enum.find_value(map, fn
-        {position, "S"} -> position
-        _ -> nil
-      end)
+      start_position =
+        Enum.find_value(map, fn
+          {position, "S"} -> position
+          _ -> nil
+        end)
 
-      end_position = Enum.find_value(map, fn
-        {position, "E"} -> position
-        _ -> nil
-      end)
+      end_position =
+        Enum.find_value(map, fn
+          {position, "E"} -> position
+          _ -> nil
+        end)
 
       find_path(map, start_position, end_position)
     end
@@ -138,15 +148,21 @@ defmodule Aletopelta.Year2024.Day16 do
       do_find(map, [{[start_position], 0, :east}], end_position, %{})
     end
 
-    defp do_find(map, [{[current_position | _], score, direction} | _] = queue, end_position, visited) do
+    defp do_find(
+           map,
+           [{[current_position | _], score, direction} | _] = queue,
+           end_position,
+           visited
+         ) do
       if current_position == end_position do
-        queue = queue
-        |> Enum.filter(fn
-          {[^end_position | _], ^score, _} -> true
-          _ -> false
-        end)
-        |> Enum.flat_map(&elem(&1, 0))
-        |> Enum.uniq
+        queue =
+          queue
+          |> Enum.filter(fn
+            {[^end_position | _], ^score, _} -> true
+            _ -> false
+          end)
+          |> Enum.flat_map(&elem(&1, 0))
+          |> Enum.uniq()
 
         length(queue)
       else

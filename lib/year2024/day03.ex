@@ -41,16 +41,27 @@ defmodule Aletopelta.Year2024.Day03 do
     end
 
     def calculate([], _active), do: 0
+
     def calculate([message | rest], active) do
       case String.slice(Enum.at(message, 0), 0, 3) do
-        "don" -> calculate(rest, :notactive)
-        "do(" -> calculate(rest, :active)
+        "don" ->
+          calculate(rest, :notactive)
+
+        "do(" ->
+          calculate(rest, :active)
+
         "mul" ->
           case active do
-            :active -> String.to_integer(Enum.at(message, 2)) * String.to_integer(Enum.at(message, 3)) + calculate(rest, active)
-            :notactive -> calculate(rest, active)
+            :active ->
+              String.to_integer(Enum.at(message, 2)) * String.to_integer(Enum.at(message, 3)) +
+                calculate(rest, active)
+
+            :notactive ->
+              calculate(rest, active)
           end
-        _ -> calculate(rest, active)
+
+        _ ->
+          calculate(rest, active)
       end
     end
   end

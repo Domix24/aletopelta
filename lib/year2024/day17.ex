@@ -12,7 +12,7 @@ defmodule Aletopelta.Year2024.Day17 do
     @program_pattern ~r/(\d)+/
 
     def parse_input(input) do
-     parse_input(input, %{}, [])
+      parse_input(input, %{}, [])
     end
 
     defp parse_input([], register, program) do
@@ -22,17 +22,25 @@ defmodule Aletopelta.Year2024.Day17 do
     defp parse_input([first | rest], register, program) do
       register_result = Regex.scan(@register_pattern, first)
 
-      {register, program} = case register_result do
-        [] ->
-          program_result = Regex.scan(@program_pattern, first)
-          case program_result do
-            [] -> {register, program}
-            _ -> {register, Enum.reduce(program_result, [], fn [_, digit], acc ->
-                [String.to_integer(digit) | acc]
-              end)}
-          end
-        [[_, name, number]] -> {Map.put(register, name, String.to_integer(number)), program}
-      end
+      {register, program} =
+        case register_result do
+          [] ->
+            program_result = Regex.scan(@program_pattern, first)
+
+            case program_result do
+              [] ->
+                {register, program}
+
+              _ ->
+                {register,
+                 Enum.reduce(program_result, [], fn [_, digit], acc ->
+                   [String.to_integer(digit) | acc]
+                 end)}
+            end
+
+          [[_, name, number]] ->
+            {Map.put(register, name, String.to_integer(number)), program}
+        end
 
       parse_input(rest, register, program)
     end
@@ -51,13 +59,20 @@ defmodule Aletopelta.Year2024.Day17 do
       result = execute_command(register, first, second)
 
       case result do
-        {:jump, nil} -> execute_program(register, rest, full, index, max)
-        {:jump, number} -> execute_program(register, Enum.drop(full, number), full, index, max)
-        {:out, number} -> case index do
-          ^max -> [number]
-          _ -> [number | execute_program(register, rest, full, index + 1, max)]
-        end
-        _ -> execute_program(result, rest, full, index, max)
+        {:jump, nil} ->
+          execute_program(register, rest, full, index, max)
+
+        {:jump, number} ->
+          execute_program(register, Enum.drop(full, number), full, index, max)
+
+        {:out, number} ->
+          case index do
+            ^max -> [number]
+            _ -> [number | execute_program(register, rest, full, index + 1, max)]
+          end
+
+        _ ->
+          execute_program(result, rest, full, index, max)
       end
     end
 
@@ -89,11 +104,19 @@ defmodule Aletopelta.Year2024.Day17 do
     end
 
     defp execute_command(register, 6, first) do
-      Map.update!(register, "B", &div(&1 * 0 + get_combo(register, 4), trunc(:math.pow(2, get_combo(register, first)))))
+      Map.update!(
+        register,
+        "B",
+        &div(&1 * 0 + get_combo(register, 4), trunc(:math.pow(2, get_combo(register, first))))
+      )
     end
 
     defp execute_command(register, 7, first) do
-      Map.update!(register, "C", &div(&1 * 0 + get_combo(register, 4), trunc(:math.pow(2, get_combo(register, first)))))
+      Map.update!(
+        register,
+        "C",
+        &div(&1 * 0 + get_combo(register, 4), trunc(:math.pow(2, get_combo(register, first))))
+      )
     end
 
     defp get_combo(register, 4), do: Map.get(register, "A")
@@ -108,8 +131,8 @@ defmodule Aletopelta.Year2024.Day17 do
     """
     def execute(input) do
       input
-      |> Common.parse_input
-      |> Common.execute_program
+      |> Common.parse_input()
+      |> Common.execute_program()
       |> Enum.join(",")
     end
   end
@@ -121,7 +144,7 @@ defmodule Aletopelta.Year2024.Day17 do
     def execute(input) do
       {register, program} = Common.parse_input(input)
 
-      prepare_loop(register, program, program |> Enum.reverse, Range.to_list(0..7), 0)
+      prepare_loop(register, program, program |> Enum.reverse(), Range.to_list(0..7), 0)
       |> Enum.find(fn possible ->
         Common.execute_program({initialize_register(register, possible), program}) == program
       end)
@@ -139,11 +162,14 @@ defmodule Aletopelta.Year2024.Day17 do
     end
 
     defp prepare_loop(register, program, reverse, a, index) do
-      values = a
-      |> Enum.filter(fn register_a ->
-        Common.execute_program({initialize_register(register, register_a), program, index}) |> Enum.reverse |> Enum.at(index) == reverse |> Enum.at(index)
-      end)
-      |> Enum.flat_map(&((&1 * 8)..(&1 * 8 + 7)))
+      values =
+        a
+        |> Enum.filter(fn register_a ->
+          Common.execute_program({initialize_register(register, register_a), program, index})
+          |> Enum.reverse()
+          |> Enum.at(index) == reverse |> Enum.at(index)
+        end)
+        |> Enum.flat_map(&((&1 * 8)..(&1 * 8 + 7)))
 
       prepare_loop(register, program, reverse, values, index + 1)
     end
