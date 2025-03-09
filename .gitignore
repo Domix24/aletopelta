@@ -24,3 +24,9 @@ aletopelta-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+# Custom
+mix.lock
+input*
+.envvars
+.session

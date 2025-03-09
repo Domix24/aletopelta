@@ -1,5 +1,11 @@
 defmodule Aletopelta.Helper do
+  @moduledoc """
+  Helpers
+  """
   defmodule Draw do
+    @moduledoc """
+    Draw
+    """
     def draw_map(map) do
       {max_x, max_y} = Enum.reduce(map, {0, 0}, fn {{x, y}, _}, {max_x, max_y} ->
         {max(x, max_x), max(y, max_y)}
@@ -8,7 +14,7 @@ defmodule Aletopelta.Helper do
       for y <- 0..max_y, x <- 0..max_x do
         coordinate = {x, y}
 
-        sign = IO.write Map.fetch!(map, coordinate)
+        sign = Map.fetch!(map, coordinate)
 
         color = case sign do
           1 -> IO.ANSI.green <> IO.ANSI.blink_slow # main
@@ -18,7 +24,7 @@ defmodule Aletopelta.Helper do
           5 -> IO.ANSI.cyan <> IO.ANSI.blink_off # other
         end
 
-        IO.write color <> sign
+        IO.write color <> "#{sign}"
         if x == max_x, do: IO.puts ""
       end
     end
