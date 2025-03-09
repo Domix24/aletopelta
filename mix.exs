@@ -4,11 +4,12 @@ defmodule Aletopelta.MixProject do
   def project do
     [
       app: :aletopelta,
-      version: "0.1.0",
-      elixir: "~> 1.17",
+      version: "0.2.0",
+      elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      aliases: aliases()
+      aliases: aliases(),
+      consolidate_protocols: Mix.env() != :test
     ]
   end
 
@@ -23,7 +24,9 @@ defmodule Aletopelta.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:tesla, "~> 1.4"},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:belodon, "~> 0.1"}
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
     ]
@@ -33,6 +36,13 @@ defmodule Aletopelta.MixProject do
   defp aliases do
     [
       runx: "run lib/aletopelta.ex"
+    ]
+  end
+
+  # 'set the :preferred_envs for "def cli" if you are running tests from within another command'
+  def cli do
+    [
+      preferred_envs: ["belodon.test": :test]
     ]
   end
 end
