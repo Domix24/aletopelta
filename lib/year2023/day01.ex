@@ -7,13 +7,14 @@ defmodule Aletopelta.Year2023.Day01 do
     Common part for Day 1
     """
     def parse_input([], _), do: []
+
     def parse_input([first | others], find_numbers) do
       [parse_line(first, find_numbers) | parse_input(others, find_numbers)]
     end
 
     defp parse_line(line, find_numbers) do
       line
-      |> String.graphemes
+      |> String.graphemes()
       |> find_numbers.()
     end
 
@@ -38,6 +39,7 @@ defmodule Aletopelta.Year2023.Day01 do
     defp find_numbers(graphemes, number1 \\ nil, number2 \\ nil)
     defp find_numbers([], number1, nil), do: [number1, number1]
     defp find_numbers([], number1, number2), do: [number1, number2]
+
     defp find_numbers([first | others], nil, number2) do
       if Common.digit?(first) do
         find_numbers(others, first)
@@ -45,6 +47,7 @@ defmodule Aletopelta.Year2023.Day01 do
         find_numbers(others, nil, number2)
       end
     end
+
     defp find_numbers([first | others], number1, number2) do
       if Common.digit?(first) do
         find_numbers(others, number1, first)
@@ -67,9 +70,11 @@ defmodule Aletopelta.Year2023.Day01 do
     defp find_numbers(graphemes, number1 \\ nil, number2 \\ nil, textual \\ "")
     defp find_numbers([], number1, nil, _), do: [number1, number1]
     defp find_numbers([], number1, number2, _), do: [number1, number2]
+
     defp find_numbers([first | others], nil, number2, textual) do
-      {state, textual} = "#{textual}#{first}"
-      |> get_state
+      {state, textual} =
+        "#{textual}#{first}"
+        |> get_state
 
       cond do
         Common.digit?(first) -> find_numbers(others, first)
@@ -78,9 +83,11 @@ defmodule Aletopelta.Year2023.Day01 do
         true -> find_numbers(others)
       end
     end
+
     defp find_numbers([first | others], number1, number2, textual) do
-      {state, textual} = "#{textual}#{first}"
-      |> get_state
+      {state, textual} =
+        "#{textual}#{first}"
+        |> get_state
 
       cond do
         Common.digit?(first) -> find_numbers(others, number1, first)
@@ -90,17 +97,22 @@ defmodule Aletopelta.Year2023.Day01 do
       end
     end
 
-    defp get_state("one"),   do: {:complete, "1"}
-    defp get_state("two"),   do: {:complete, "2"}
+    defp get_state("one"), do: {:complete, "1"}
+    defp get_state("two"), do: {:complete, "2"}
     defp get_state("three"), do: {:complete, "3"}
-    defp get_state("four"),  do: {:complete, "4"}
-    defp get_state("five"),  do: {:complete, "5"}
-    defp get_state("six"),   do: {:complete, "6"}
+    defp get_state("four"), do: {:complete, "4"}
+    defp get_state("five"), do: {:complete, "5"}
+    defp get_state("six"), do: {:complete, "6"}
     defp get_state("seven"), do: {:complete, "7"}
     defp get_state("eight"), do: {:complete, "8"}
-    defp get_state("nine"),  do: {:complete, "9"}
+    defp get_state("nine"), do: {:complete, "9"}
+
     defp get_state(text) do
-      case Regex.scan(~r/(o|on|t|tw|th|thr|thre|f|fo|fou|fi|fiv|s|si|se|sev|seve|e|ei|eig|eigh|n|ni|nin)$/, text, capture: :first) do
+      case Regex.scan(
+             ~r/(o|on|t|tw|th|thr|thre|f|fo|fou|fi|fiv|s|si|se|sev|seve|e|ei|eig|eigh|n|ni|nin)$/,
+             text,
+             capture: :first
+           ) do
         [] -> {:error, ""}
         [[letters]] -> {:partial, letters}
       end
@@ -113,6 +125,6 @@ defmodule Aletopelta.Year2023.Day01 do
     defp add_letter(others, "7"), do: ["n" | others]
     defp add_letter(others, "8"), do: ["t" | others]
     defp add_letter(others, "9"), do: ["e" | others]
-    defp add_letter(others, _),   do: others
+    defp add_letter(others, _), do: others
   end
 end

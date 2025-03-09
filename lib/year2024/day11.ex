@@ -17,15 +17,17 @@ defmodule Aletopelta.Year2024.Day11 do
     defp split_stone(stone) do
       chunk_length = div(String.length(stone), 2)
 
-      {first, second} = stone
-      |> String.split_at(chunk_length)
+      {first, second} =
+        stone
+        |> String.split_at(chunk_length)
 
-      second = second
-      |> String.trim_leading("0")
-      |> then(fn
-        "" -> "0"
-        anything -> anything
-      end)
+      second =
+        second
+        |> String.trim_leading("0")
+        |> then(fn
+          "" -> "0"
+          anything -> anything
+        end)
 
       [first, second]
     end
@@ -36,7 +38,9 @@ defmodule Aletopelta.Year2024.Day11 do
       |> merge
       |> start_blink(0, max_blinks)
     end
+
     defp start_blink(stones, blink_index, max_blinks) when max_blinks == blink_index, do: stones
+
     defp start_blink(stones, blink_index, max_blinks) do
       stones
       |> Enum.map(fn
@@ -44,11 +48,15 @@ defmodule Aletopelta.Year2024.Day11 do
         {stone, amount} -> {{rem(String.length(stone), 2) == 0, stone}, amount}
       end)
       |> Enum.flat_map(fn
-        {{:ok, stone}, amount} -> [{stone, amount}]
+        {{:ok, stone}, amount} ->
+          [{stone, amount}]
+
         {{true, stone}, amount} ->
           split_stone(stone)
           |> Enum.map(&{&1, amount})
-        {{false, stone}, amount} -> [{"#{String.to_integer(stone) * 2024}", amount}]
+
+        {{false, stone}, amount} ->
+          [{"#{String.to_integer(stone) * 2024}", amount}]
       end)
       |> merge
       |> start_blink(blink_index + 1, max_blinks)

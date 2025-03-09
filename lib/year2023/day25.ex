@@ -7,13 +7,14 @@ defmodule Aletopelta.Year2023.Day25 do
     Common part for Day 25
     """
     def parse_input(input) do
-      Enum.reduce input, %{}, fn line, graph ->
+      Enum.reduce(input, %{}, fn line, graph ->
         [[component] | components] = Regex.scan(~r/[a-zA-Z]+/, line)
-        Enum.reduce components, graph, fn [compo], graph ->
+
+        Enum.reduce(components, graph, fn [compo], graph ->
           Map.update(graph, component, MapSet.new([compo]), &MapSet.put(&1, compo))
           |> Map.update(compo, MapSet.new([component]), &MapSet.put(&1, component))
-        end
-      end
+        end)
+      end)
     end
   end
 
@@ -24,15 +25,17 @@ defmodule Aletopelta.Year2023.Day25 do
     def execute(input) do
       Common.parse_input(input)
       |> then(fn graph ->
-        keys = Map.keys(graph)
-        |> MapSet.new
+        keys =
+          Map.keys(graph)
+          |> MapSet.new()
 
         do_thing(graph, keys)
         |> Stream.map(fn keys ->
-          size = Map.keys(graph)
-          |> MapSet.new
-          |> MapSet.difference(keys)
-          |> MapSet.size
+          size =
+            Map.keys(graph)
+            |> MapSet.new()
+            |> MapSet.difference(keys)
+            |> MapSet.size()
 
           MapSet.size(keys) * size
         end)
@@ -40,10 +43,10 @@ defmodule Aletopelta.Year2023.Day25 do
       end)
     end
 
-    defp do_thing graph, keys do
+    defp do_thing(graph, keys) do
       loopy = fn key ->
         MapSet.difference(Map.fetch!(graph, key), keys)
-        |> MapSet.size
+        |> MapSet.size()
       end
 
       Enum.sum_by(keys, loopy)
@@ -57,16 +60,16 @@ defmodule Aletopelta.Year2023.Day25 do
           |> elem(1)
           |> case do
             [key] ->
-              do_thing graph, MapSet.delete(keys, key)
+              do_thing(graph, MapSet.delete(keys, key))
 
             [_ | _] = possible_keys ->
-              process_keys possible_keys, keys, graph
+              process_keys(possible_keys, keys, graph)
           end
       end
     end
 
-    defp process_keys possible_keys, keys, graph do
-      Enum.reduce_while possible_keys, :error, fn key, _ ->
+    defp process_keys(possible_keys, keys, graph) do
+      Enum.reduce_while(possible_keys, :error, fn key, _ ->
         try do
           do_thing(graph, MapSet.delete(keys, key))
           |> case do
@@ -77,7 +80,7 @@ defmodule Aletopelta.Year2023.Day25 do
           _ ->
             {:cont, :error}
         end
-      end
+      end)
     end
   end
 

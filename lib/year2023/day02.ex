@@ -10,30 +10,34 @@ defmodule Aletopelta.Year2023.Day02 do
       input
       |> Enum.map(fn game ->
         [[_, index, rest]] = Regex.scan(~r/(\d+): (.*)/, game)
-        rest = rest
-        |> String.split("; ")
-        |> Enum.map(&String.trim/1)
-        |> Enum.map(fn set ->
-          String.split(set, ", ")
-          |> Enum.map(&String.split(&1, " "))
-          |> Keyword.new(&create_keyword/1)
-        end)
+
+        rest =
+          rest
+          |> String.split("; ")
+          |> Enum.map(&String.trim/1)
+          |> Enum.map(fn set ->
+            String.split(set, ", ")
+            |> Enum.map(&String.split(&1, " "))
+            |> Keyword.new(&create_keyword/1)
+          end)
+
         %{index: String.to_integer(index), sets: rest}
       end)
     end
 
-    defp create_keyword [number, color] do
+    defp create_keyword([number, color]) do
       {String.to_atom(color), String.to_integer(number)}
     end
 
     def get_max(game) do
-      max = game
-      |> Map.fetch!(:sets)
-      |> Enum.reduce(fn set, acc ->
-        Keyword.merge(set, acc, fn _, value1, value2 ->
-          max(value1, value2)
+      max =
+        game
+        |> Map.fetch!(:sets)
+        |> Enum.reduce(fn set, acc ->
+          Keyword.merge(set, acc, fn _, value1, value2 ->
+            max(value1, value2)
+          end)
         end)
-      end)
 
       %{index: Map.fetch!(game, :index), max: max}
     end
@@ -51,7 +55,8 @@ defmodule Aletopelta.Year2023.Day02 do
     end
 
     defp valid?(%{max: max, index: _}) do
-      Keyword.fetch!(max, :blue) <= 14 and Keyword.fetch!(max, :green) <= 13 and Keyword.fetch!(max, :red) <= 12
+      Keyword.fetch!(max, :blue) <= 14 and Keyword.fetch!(max, :green) <= 13 and
+        Keyword.fetch!(max, :red) <= 12
     end
   end
 

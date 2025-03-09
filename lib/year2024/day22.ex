@@ -8,7 +8,7 @@ defmodule Aletopelta.Year2024.Day22 do
     """
     def parse_input(input) do
       input
-      |> Enum.reject(& &1 == "")
+      |> Enum.reject(&(&1 == ""))
       |> Enum.map(&String.to_integer/1)
     end
 
@@ -33,12 +33,13 @@ defmodule Aletopelta.Year2024.Day22 do
     """
     def execute(input) do
       input
-      |> Common.parse_input
+      |> Common.parse_input()
       |> evolve(2000)
-      |> Enum.sum
+      |> Enum.sum()
     end
 
     defp evolve(secrets, 0), do: secrets
+
     defp evolve(secrets, count) do
       secrets
       |> Enum.map(&Common.evolve(&1))
@@ -52,7 +53,7 @@ defmodule Aletopelta.Year2024.Day22 do
     """
     def execute(input) do
       input
-      |> Common.parse_input
+      |> Common.parse_input()
       |> do_evolve(%{})
       |> find_highest
     end
@@ -63,23 +64,33 @@ defmodule Aletopelta.Year2024.Day22 do
     end
 
     defp do_evolve([], map), do: map
+
     defp do_evolve([code | others], map) do
-      result = evolve(code, 2000)
-      |> build_seqmap(%{})
-      |> Map.to_list
-      |> update_map(map)
+      result =
+        evolve(code, 2000)
+        |> build_seqmap(%{})
+        |> Map.to_list()
+        |> update_map(map)
 
       do_evolve(others, result)
     end
 
     defp update_map([], map), do: map
+
     defp update_map([{sequence, digit} | others], map) do
-      update_map(others, Map.update(map, sequence, digit, & &1 + digit))
+      update_map(others, Map.update(map, sequence, digit, &(&1 + digit)))
     end
 
     defp build_seqmap([_, _, _], map), do: map
-    defp build_seqmap([{_, diff1}, {_, diff2} = e2, {_, diff3} = e3, {digit, diff4} = e4 | others], map) do
-      build_seqmap([e2, e3, e4 | others], Map.put_new(map, "#{diff1},#{diff2},#{diff3},#{diff4}", digit))
+
+    defp build_seqmap(
+           [{_, diff1}, {_, diff2} = e2, {_, diff3} = e3, {digit, diff4} = e4 | others],
+           map
+         ) do
+      build_seqmap(
+        [e2, e3, e4 | others],
+        Map.put_new(map, "#{diff1},#{diff2},#{diff3},#{diff4}", digit)
+      )
     end
 
     defp evolve(secret, 1) do
