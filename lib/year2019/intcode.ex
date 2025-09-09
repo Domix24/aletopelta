@@ -5,6 +5,10 @@ defmodule Aletopelta.Year2019.Intcode do
 
   @type input() :: list(binary())
   @type intcode() :: %{integer() => integer()}
+  @type memory() :: %{program: intcode(), index: integer(), base: integer()}
+  @type command() :: [integer()]
+  @type output() :: [integer()]
+  @type state() :: :stop | :pause
 
   @spec parse(input()) :: intcode()
   def parse(input) do
@@ -141,13 +145,15 @@ defmodule Aletopelta.Year2019.Intcode do
     Map.put(map, position + base, value)
   end
 
-  @spec prepare(intcode(), [integer()], integer(), integer()) ::
-          {%{program: intcode(), index: integer(), base: integer()}, [integer()], :stop | :pause}
-  def prepare(map, input, index, base),
+  @spec prepare(intcode(), command(), integer(), integer()) :: {memory(), output(), state()}
+  def prepare(map, input \\ [], index \\ 0, base \\ 0),
     do:
       map
       |> do_reduce(index, %{input: input}, base)
       |> format_output()
+
+  @spec continue(memory(), command()) :: {memory(), output(), state()}
+  def continue(memory, input \\ []), do: prepare(memory.program, input, memory.index, memory.base)
 
   defp format_output({program, index, %{output: output, state: state}, base}),
     do: {%{program: program, index: index, base: base}, output, state}

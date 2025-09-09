@@ -131,7 +131,7 @@ defmodule Aletopelta.Year2019.Day25 do
     end
 
     defp prepare_graph(intcode) do
-      {memory, output, _} = Intcode.prepare(intcode, [], 0, 0)
+      {memory, output, _} = Intcode.prepare(intcode)
 
       %{name: name, doors: doors} = process_output(output)
 
@@ -257,7 +257,7 @@ defmodule Aletopelta.Year2019.Day25 do
         |> String.replace("a", unparsed)
         |> String.to_charlist()
 
-      {memory, output, _} = Intcode.prepare(intcode.program, input, intcode.index, intcode.base)
+      {memory, output, _} = Intcode.continue(intcode, input)
 
       {memory, output}
     end

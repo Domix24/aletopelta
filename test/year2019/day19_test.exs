@@ -2,7 +2,6 @@ defmodule AletopeltaTest.Year2019.Day19 do
   use ExUnit.Case, async: true
   alias Aletopelta.Year2019.Day19, as: Solution
 
-  @tag timeout: :infinity
   test "is part1 working" do
     assert Belodon.solve(Solution, :part1) == 154
   end
