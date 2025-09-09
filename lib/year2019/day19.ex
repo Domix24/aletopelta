@@ -2,169 +2,25 @@ defmodule Aletopelta.Year2019.Day19 do
   @moduledoc """
   Day 19 of Year 2019
   """
+  alias Aletopelta.Year2019.Intcode
+
   defmodule Common do
     @moduledoc """
     Common part for Day 19
     """
 
     @type input() :: list(binary())
-    @type intcode() :: %{integer() => integer()}
-    @type point() :: {integer(), integer()}
-    @type grid() :: %{point() => integer()}
 
-    @spec parse_input(input()) :: intcode()
+    @spec parse_input(input()) :: Intcode.intcode()
     def parse_input(input) do
-      input
-      |> Enum.at(0)
-      |> String.split(",")
-      |> Enum.with_index(fn string, index -> {index, String.to_integer(string)} end)
-      |> Map.new()
+      Intcode.parse(input)
     end
 
-    defp do_reduce(map, i, options, base),
-      do:
-        map
-        |> Map.fetch!(i)
-        |> parse_operator()
-        |> clean_options(options)
-        |> follow_command(map, i, base)
-        |> update_parameters()
+    @spec prepare(Intcode.intcode(), {integer(), integer()}) ::
+            {Intcode.memory(), Intcode.output(), Intcode.state()}
+    def prepare(map, {x, y}), do: Intcode.prepare(map, [x, y])
 
-    defp clean_options(operator, options), do: {operator, Map.drop(options, [:state])}
-
-    defp follow_command({operator, options}, map, i, base),
-      do: get_command(operator, map, i, options, base)
-
-    defp parse_operator(operator) do
-      [smode3, smode2, smode1 | soperator] =
-        "#{operator}"
-        |> String.pad_leading(5, "0")
-        |> String.graphemes()
-
-      noperator =
-        soperator
-        |> Enum.join("")
-        |> String.to_integer()
-
-      {noperator, [smode1, smode2, smode3]}
-    end
-
-    defp update_parameters({map, i, %{state: state} = opt, base}) when state in [:stop, :pause],
-      do: {map, i, opt, base}
-
-    defp update_parameters({map, i, opt, base}), do: do_reduce(map, i, opt, base)
-
-    defp get_command({99, _}, map, i, %{output: value} = opt, base) do
-      new_map = Map.put(map, 0, value)
-      new_opt = Map.put(opt, :state, :stop)
-
-      {new_map, i, new_opt, base}
-    end
-
-    defp get_command({command, [mode1, mode2, mode3]}, map, i, opt, base)
-         when command in [1, 2, 7, 8] do
-      first_value = get_value(map, i + 1, mode1, base)
-      second_value = get_value(map, i + 2, mode2, base)
-
-      result = do_operation(command, first_value, second_value)
-      new_map = set_value(map, i + 3, mode3, base, result)
-
-      {new_map, i + 4, opt, base}
-    end
-
-    defp get_command({3, _}, map, i, %{input: []} = opt, base) do
-      new_opt = Map.put(opt, :state, :pause)
-
-      {map, i, new_opt, base}
-    end
-
-    defp get_command({3, [mode1 | _]}, map, i, %{input: [value | rest]} = opt, base) do
-      new_map = set_value(map, i + 1, mode1, base, value)
-
-      new_opt = Map.put(opt, :input, rest)
-
-      {new_map, i + 2, new_opt, base}
-    end
-
-    defp get_command({4, [mode1, _, _]}, map, i, opt, base) do
-      first_value = get_value(map, i + 1, mode1, base)
-
-      new_opt = Map.update(opt, :output, [first_value], &[first_value | &1])
-
-      {map, i + 2, new_opt, base}
-    end
-
-    defp get_command({command, [mode1, mode2, _]}, map, i, opt, base) when command in 5..6 do
-      first_value = get_value(map, i + 1, mode1, base)
-      second_value = get_value(map, i + 2, mode2, base)
-
-      if jump?(command, first_value) do
-        {map, second_value, opt, base}
-      else
-        {map, i + 3, opt, base}
-      end
-    end
-
-    defp get_command({9, [mode1 | _]}, map, i, opt, base) do
-      first_value = get_value(map, i + 1, mode1, base)
-
-      {map, i + 2, opt, base + first_value}
-    end
-
-    defp do_operation(1, param1, param2), do: param1 + param2
-    defp do_operation(2, param1, param2), do: param1 * param2
-
-    defp do_operation(7, param1, param2) when param1 < param2, do: 1
-    defp do_operation(7, _, _), do: 0
-
-    defp do_operation(8, param1, param1), do: 1
-    defp do_operation(8, _, _), do: 0
-
-    defp jump?(5, param), do: param != 0
-    defp jump?(6, param), do: param == 0
-
-    defp get_value(map, i, "0", _) do
-      position = Map.get(map, i, 0)
-      Map.get(map, position, 0)
-    end
-
-    defp get_value(map, i, "1", _) do
-      Map.get(map, i, 0)
-    end
-
-    defp get_value(map, i, "2", base) do
-      position = Map.get(map, i, 0)
-      Map.get(map, position + base, 0)
-    end
-
-    defp set_value(map, i, "0", _, value) do
-      position = Map.get(map, i, 0)
-      Map.put(map, position, value)
-    end
-
-    defp set_value(map, i, "2", base, value) do
-      position = Map.get(map, i, 0)
-      Map.put(map, position + base, value)
-    end
-
-    @spec prepare(intcode(), [integer()], integer(), integer()) ::
-            {%{program: intcode(), index: integer(), base: integer()}, [integer()],
-             :stop | :pause}
-    def prepare(map, input, index, base),
-      do:
-        map
-        |> do_reduce(index, %{input: input}, base)
-        |> format_output()
-
-    defp format_output({program, index, %{output: output, state: state}, base}),
-      do: {%{program: program, index: index, base: base}, output, state}
-
-    @spec prepare(intcode(), {integer(), integer()}) ::
-            {%{program: intcode(), index: integer(), base: integer()}, [integer()],
-             :stop | :pause}
-    def prepare(map, {x, y}), do: prepare(map, [x, y], 0, 0)
-
-    @spec beam?({integer(), integer()}, intcode()) :: boolean()
+    @spec beam?({integer(), integer()}, Intcode.intcode()) :: boolean()
     def beam?(input, intcode),
       do:
         intcode
@@ -182,41 +38,40 @@ defmodule Aletopelta.Year2019.Day19 do
       input
       |> Common.parse_input()
       |> build_grid()
-      |> Enum.sum_by(&Range.size(elem(&1, 1)))
+      |> Enum.sum_by(&get_size/1)
     end
 
+    defp get_size({_, range}), do: Range.size(range)
+
     defp build_grid(intcode, square \\ 50) do
-      0..(square - 1)
-      |> Stream.transform({-1, 0}, fn x, {last_min, last_size} = last_acc ->
-        new_min =
-          (last_min + 1)
-          |> Range.new(min(last_min + 4, square - 1), 1)
-          |> Enum.find(&Common.beam?({x, &1}, intcode))
-
-        cond do
-          !is_nil(new_min) and new_min > 0 and is_nil(last_size) ->
-            process_max(nil, new_min, square, x)
-
-          new_min ->
-            new_min
-            |> Range.new(min(new_min + last_size + 1, square - 1))
-            |> Enum.find(&(!Common.beam?({x, &1}, intcode)))
-            |> process_max(new_min, square, x)
-
-          x > 2 ->
-            {:halt, nil}
-
-          true ->
-            {[], last_acc}
-        end
+      Stream.transform(0..(square - 1), {-1, 0}, fn x, {last_min, last_size} = last_acc ->
+        (last_min + 1)
+        |> Range.new(min(last_min + 4, square - 1), 1)
+        |> Enum.find(&Common.beam?({x, &1}, intcode))
+        |> process_grid(last_size, square, x, last_acc, intcode)
       end)
     end
 
-    defp process_max(new_max, new_min, _, x) when not is_nil(new_max),
-      do: {[{x, Range.new(new_min, new_max - 1)}], {new_min, new_max - new_min}}
+    defp process_grid(nil, _, _, _, acc, _), do: {[], acc}
 
-    defp process_max(_, new_min, square, x),
+    defp process_grid(min, nil, square, x, _, _) when is_integer(min),
+      do: process_max(nil, min, square, x)
+
+    defp process_grid(mim, size, square, x, _, intcode) when is_integer(mim),
+      do:
+        mim
+        |> Range.new(min(mim + size + 1, square - 1))
+        |> Enum.find(&(!Common.beam?({x, &1}, intcode)))
+        |> process_max(mim, square, x)
+
+    defp process_grid(_, _, _, x, _, _) when x > 2, do: {:halt, nil}
+    defp process_grid(_, _, _, _, acc, _), do: {[], acc}
+
+    defp process_max(nil, new_min, square, x),
       do: {[{x, Range.new(new_min, square - 1)}], {new_min, nil}}
+
+    defp process_max(new_max, new_min, _, x),
+      do: {[{x, Range.new(new_min, new_max - 1)}], {new_min, new_max - new_min}}
   end
 
   defmodule Part2 do

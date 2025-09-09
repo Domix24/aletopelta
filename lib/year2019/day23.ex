@@ -112,8 +112,8 @@ defmodule Aletopelta.Year2019.Day23 do
     end
 
     defp run_computer(%{program: program, index: index, base: base}, input, messages) do
-      program
-      |> Intcode.prepare(input, index, base)
+      %{program: program, index: index, base: base}
+      |> Intcode.continue(input)
       |> format_computer(messages)
     end
 

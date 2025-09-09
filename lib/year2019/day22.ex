@@ -12,8 +12,7 @@ defmodule Aletopelta.Year2019.Day22 do
     @spec parse_input(input()) ::
             list(%{command: :newstack} | %{command: :increment | :cut, number: integer()})
     def parse_input(input) do
-      input
-      |> Enum.map(fn line ->
+      Enum.map(input, fn line ->
         regex = ~r/(^deal i)|(^(deal w).*\s(\d+)$)|(^(c.*)\s(-?\d+)$)/
 
         regex
@@ -44,25 +43,29 @@ defmodule Aletopelta.Year2019.Day22 do
     end
 
     defp execute_commands(commands, decksize) do
-      Enum.reduce(commands, 0..(decksize - 1), fn
-        %{command: :increment, number: number}, actual_deck ->
-          actual_deck
-          |> Stream.cycle()
-          |> Stream.with_index(fn _, index -> index end)
-          |> Stream.transform(nil, fn
-            index, _ when rem(index, number) == 0 -> {[rem(index, decksize)], :loop}
-            _, acc -> {[], acc}
-          end)
-          |> Stream.zip(actual_deck)
-          |> Enum.sort_by(&elem(&1, 0))
-          |> Enum.map(&elem(&1, 1))
+      Enum.reduce(commands, 0..(decksize - 1), &execute_command(&1, &2, decksize))
+    end
 
-        %{command: :newstack}, actual_deck ->
-          Enum.reverse(actual_deck)
+    defp execute_command(%{command: :increment, number: number}, actual_deck, decksize),
+      do:
+        actual_deck
+        |> Stream.cycle()
+        |> Stream.with_index(fn _, index -> index end)
+        |> Stream.transform(nil, fn
+          index, _ when rem(index, number) == 0 -> {[rem(index, decksize)], :loop}
+          _, acc -> {[], acc}
+        end)
+        |> Stream.zip(actual_deck)
+        |> Enum.sort_by(&elem(&1, 0))
+        |> Enum.map(&elem(&1, 1))
 
-        %{command: :cut, number: number}, actual_deck ->
-          {part1, part2} = Enum.split(actual_deck, number)
-          Enum.concat(part2, part1)
+    defp execute_command(%{command: :newstack}, actual_deck, _), do: Enum.reverse(actual_deck)
+
+    defp execute_command(%{command: :cut, number: number}, actual_deck, _) do
+      actual_deck
+      |> Enum.split(number)
+      |> then(fn {part2, part1} ->
+        Enum.concat(part1, part2)
       end)
     end
   end
@@ -82,17 +85,7 @@ defmodule Aletopelta.Year2019.Day22 do
       {memory0, memory1} =
         input
         |> Enum.reverse()
-        |> Enum.reduce({1, 0}, fn
-          %{command: :cut, number: number}, {memory0, memory1} ->
-            {memory0, rem(memory1 + number, size)} |> modulize(size)
-
-          %{command: :increment, number: number}, {memory0, memory1} ->
-            result = modex(number, size - 2, size)
-            {memory0 * result, memory1 * result} |> modulize(size)
-
-          %{command: :newstack}, {memory0, memory1} ->
-            {-memory0, -(memory1 + 1)} |> modulize(size)
-        end)
+        |> Enum.reduce({1, 0}, &module_command(&1, &2, size))
 
       power = modex(memory0, count, size)
 
@@ -101,6 +94,20 @@ defmodule Aletopelta.Year2019.Day22 do
         size
       )
     end
+
+    defp module_command(%{command: :cut, number: number}, {memory0, memory1}, size),
+      do: modulize({memory0, rem(memory1 + number, size)}, size)
+
+    defp module_command(%{command: :increment, number: number}, {memory0, memory1}, size),
+      do:
+        number
+        |> modex(size - 2, size)
+        |> then(fn result ->
+          modulize({memory0 * result, memory1 * result}, size)
+        end)
+
+    defp module_command(%{command: :newstack}, {memory0, memory1}, size),
+      do: modulize({-memory0, -(memory1 + 1)}, size)
 
     defp modulize({number1, number2}, modulus),
       do: {rem(number1 + modulus, modulus), rem(number2 + modulus, modulus)}

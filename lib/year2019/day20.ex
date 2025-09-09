@@ -16,17 +16,7 @@ defmodule Aletopelta.Year2019.Day20 do
 
     @spec parse_input(input()) :: output()
     def parse_input(input) do
-      parsed =
-        input
-        |> Enum.with_index()
-        |> Enum.flat_map(fn {line, y} ->
-          line
-          |> String.graphemes()
-          |> Enum.with_index()
-          |> Enum.reject(&(elem(&1, 0) in ["#", " "]))
-          |> Enum.map(fn {chr, x} -> {{x, y}, chr} end)
-        end)
-        |> Map.new()
+      parsed = parse_map(input)
 
       portals = parse_portals(parsed)
       portals_map = Map.new(portals, &{{&1.name, !&1.outer?}, &1.position})
@@ -43,21 +33,39 @@ defmodule Aletopelta.Year2019.Day20 do
             }}}
         )
 
-      final =
-        parsed
-        |> Enum.filter(&(elem(&1, 1) === "."))
-        |> Enum.map(&{elem(&1, 0), :free})
-        |> Enum.concat(portals_objects)
-        |> Map.new()
-
-      start =
-        portals_map
-        |> Map.get({"AA", false})
-        |> get_sides()
-        |> Enum.find(&(Map.get(final, &1) === :free))
+      final = merge_portals(parsed, portals_objects)
+      start = find_start(final, portals_map)
 
       {final, %{position: start, level: 0}}
     end
+
+    defp merge_portals(parsed, objects),
+      do:
+        parsed
+        |> Enum.filter(&(elem(&1, 1) === "."))
+        |> Enum.map(&{elem(&1, 0), :free})
+        |> Enum.concat(objects)
+        |> Map.new()
+
+    defp parse_map(input),
+      do:
+        input
+        |> Enum.with_index()
+        |> Enum.flat_map(fn {line, y} ->
+          line
+          |> String.graphemes()
+          |> Enum.with_index()
+          |> Enum.reject(&(elem(&1, 0) in ["#", " "]))
+          |> Enum.map(fn {chr, x} -> {{x, y}, chr} end)
+        end)
+        |> Map.new()
+
+    defp find_start(final, map),
+      do:
+        map
+        |> Map.get({"AA", false})
+        |> get_sides()
+        |> Enum.find(&(Map.get(final, &1) === :free))
 
     defp get_destination(map, parsed, portal),
       do:
@@ -79,42 +87,49 @@ defmodule Aletopelta.Year2019.Day20 do
 
       unparsed
       |> Enum.reject(&(elem(&1, 1) == "."))
-      |> Enum.map(fn {first_position, first_letter} ->
-        [{second_position, second_letter}] =
-          first_position
-          |> get_sides()
-          |> Enum.map(fn position ->
-            sign = Map.get(unparsed, position, ".")
-            {position, sign}
-          end)
-          |> Enum.reject(&(elem(&1, 1) === "."))
-
-        {x, y} =
-          entry_position =
-          [first_position, second_position]
-          |> Enum.map(fn position ->
-            result =
-              position
-              |> get_sides()
-              |> Enum.find(&(Map.get(unparsed, &1) === "."))
-
-            result && position
-          end)
-          |> Enum.find(& &1)
-
-        full_name =
-          if first_position < second_position,
-            do: first_letter <> second_letter,
-            else: second_letter <> first_letter
-
-        %{
-          position: entry_position,
-          name: full_name,
-          outer?: x in [1, maxx - 1] or y in [1, maxy - 1]
-        }
-      end)
+      |> Enum.map(&connect_portal(&1, unparsed, maxx, maxy))
       |> Enum.uniq()
     end
+
+    defp connect_portal({first_position, first_letter}, unparsed, maxx, maxy) do
+      [{second_position, second_letter}] = map_portal(first_position, unparsed)
+
+      {x, y} = entry_position = get_entry(first_position, second_position, unparsed)
+
+      full_name =
+        if first_position < second_position,
+          do: first_letter <> second_letter,
+          else: second_letter <> first_letter
+
+      %{
+        position: entry_position,
+        name: full_name,
+        outer?: x in [1, maxx - 1] or y in [1, maxy - 1]
+      }
+    end
+
+    defp map_portal(first_position, unparsed) do
+      first_position
+      |> get_sides()
+      |> Enum.map(fn position ->
+        sign = Map.get(unparsed, position, ".")
+        {position, sign}
+      end)
+      |> Enum.reject(&(elem(&1, 1) === "."))
+    end
+
+    defp get_entry(first_position, second_position, unparsed),
+      do:
+        [first_position, second_position]
+        |> Enum.map(fn position ->
+          result =
+            position
+            |> get_sides()
+            |> Enum.find(&(Map.get(unparsed, &1) === "."))
+
+          result && position
+        end)
+        |> Enum.find(& &1)
 
     @spec get_sides({integer(), integer()}) :: [{integer(), integer()}]
     def get_sides({x, y}), do: [{x + 1, y}, {x - 1, y}, {x, y + 1}, {x, y - 1}]
