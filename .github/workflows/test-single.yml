@@ -10,7 +10,7 @@ jobs:
         environment: troodon
 
         outputs:
-            lib: ${{ steps.diff-files.outputs.test }}
+            lib: ${{ steps.diff-files.outputs.lib }}
             test: ${{ steps.diff-files.outputs.test }}
 
         steps:
