@@ -7,6 +7,6 @@ defmodule AletopeltaTest.Year2025.Day10 do
   end
 
   test "is part2 working" do
-    assert Belodon.solve(Solution, :part2) == 0
+    assert Belodon.solve(Solution, :part2) == 16_978
   end
 end
