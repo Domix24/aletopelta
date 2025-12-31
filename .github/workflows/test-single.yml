@@ -23,11 +23,16 @@ jobs:
               id: diff-files
               run: |
                   LIB=$(git diff HEAD~ --name-only | grep lib || echo)
-                  PARTIALTEST=${LIB/lib/test}
-                  TEST=${PARTIALTEST/.ex/_test.exs}
+                  PARTIALTEST=${LIB//lib/test}
+                  TEST=${PARTIALTEST//.ex/_test.exs}
 
-                  echo "lib=$LIB" >> $GITHUB_OUTPUT
-                  echo "test=$TEST" >> $GITHUB_OUTPUT
+                  echo "lib<<EOFLIB" >> $GITHUB_OUTPUT
+                  echo "$LIB" >> $GITHUB_OUTPUT
+                  echo "EOFLIB" >> $GITHUB_OUTPUT
+
+                  echo "test<<EOFTEST" >> $GITHUB_OUTPUT
+                  echo "$TEST" >> $GITHUB_OUTPUT
+                  echo "EOFTEST" >> $GITHUB_OUTPUT
 
     build:
         runs-on: ubuntu-latest
@@ -70,11 +75,23 @@ jobs:
             - name: Install dependencies
               run: mix deps.get
 
+            - name: Set variables
+              id: set
+              run: |
+                LIB=(${{ needs.prepare.outputs.lib }})
+                LIB=${LIB[*]}
+
+                TEST=(${{ needs.prepare.outputs.test }})
+                TEST=${TEST[*]}
+
+                echo "lib=$LIB" >> $GITHUB_OUTPUT
+                echo "test=$TEST" >> $GITHUB_OUTPUT
+
             - name: Tests
-              run: mix test ${{ needs.prepare.outputs.test }}
+              run: mix test ${{ steps.set.outputs.test }}
 
             - name: Credo
-              run: mix credo ${{ needs.prepare.outputs.lib }}
+              run: mix credo ${{ steps.set.outputs.lib }}
 
             - name: Dialyzer
               run: mix dialyzer
