@@ -2,134 +2,51 @@ defmodule Aletopelta.Year2017.Day18 do
   @moduledoc """
   Day 18 of Year 2017
   """
+  alias Aletopelta.Year2017.Machine
+
   defmodule Common do
     @moduledoc """
     Common part for Day 18
     """
 
-    @type input() :: list(binary())
+    @type input() :: Machine.input()
     @type output() :: integer()
 
-    @spec parse_input(input()) :: %{integer() => list(binary())}
+    @spec parse_input(input()) :: Machine.instructions()
     def parse_input(input) do
-      input
-      |> Enum.with_index(&{&2, String.split(&1)})
-      |> Map.new()
+      Machine.parse(input)
     end
 
-    @spec process(
-            %{integer() => list(binary())},
-            integer(),
-            %{binary() => integer()},
-            {list(integer()), list(integer())},
-            :part1 | :part2
-          ) :: integer() | {%{binary() => integer()}, integer(), list(integer())}
-    def process(instructions, pointer, registers, frequencies, part) do
-      instructions
-      |> Map.get(pointer)
-      |> prepare_instruction()
-      |> execute_instruction(registers, frequencies, part)
-      |> process_result(instructions, pointer, registers, frequencies, part)
+    @spec execute_instruction(
+            Machine.instruction(),
+            Machine.registers(),
+            Machine.options(),
+            (Machine.instruction(), Machine.registers(), Machine.options() -> Machine.execute())
+          ) :: Machine.execute()
+    def execute_instruction(["snd", register], registers, _, _) do
+      frequency = Map.get(registers, register, 0)
+      {:frequency, frequency}
     end
 
-    defp process_result(:nothing, instructions, pointer, registers, frequencies, part),
-      do: process(instructions, pointer + 1, registers, frequencies, part)
+    def execute_instruction(instruction, registers, options, callback),
+      do: callback.(instruction, registers, options)
 
-    defp process_result({:sound, frequency}, _, _, _, _, _), do: frequency
+    @spec process_result(
+            Machine.execute(),
+            Machine.pointer(),
+            Machine.registers(),
+            Machine.options(),
+            (any(), Machine.pointer(), Machine.registers(), Machine.options() ->
+               Machine.process())
+          ) :: Machine.process()
+    def process_result({:frequency, frequency}, pointer, registers, options, _) do
+      new_options = Map.update!(options, :send, &[frequency | &1])
 
-    defp process_result({:increase, offset}, instructions, pointer, registers, frequencies, part),
-      do: process(instructions, pointer + offset, registers, frequencies, part)
-
-    defp process_result(
-           {:frequency, frequency},
-           instructions,
-           pointer,
-           registers,
-           {xsend, xreceive},
-           part
-         ),
-         do: process(instructions, pointer + 1, registers, {[frequency | xsend], xreceive}, part)
-
-    defp process_result({:registers, new_registers}, instructions, pointer, _, frequencies, part),
-      do: process(instructions, pointer + 1, new_registers, frequencies, part)
-
-    defp process_result(
-           {:receive, new_registers, new_receive},
-           instructions,
-           pointer,
-           _,
-           {xsend, _} = _,
-           part
-         ), do: process(instructions, pointer + 1, new_registers, {xsend, new_receive}, part)
-
-    defp process_result(:wait, _, pointer, registers, {xsend, _}, _),
-      do: {registers, pointer, Enum.reverse(xsend)}
-
-    defp prepare_instruction([_, _] = instruction), do: instruction
-
-    defp prepare_instruction([name, a, b]) do
-      {prepared_a, converted_a} = prepare_type(a)
-      {prepared_b, converted_b} = prepare_type(b)
-
-      [name, prepared_a, converted_a, prepared_b, converted_b]
+      {pointer + 1, registers, new_options}
     end
 
-    defp prepare_type(value) do
-      case Regex.scan(~r"\d+", value) do
-        [_] -> {:number, String.to_integer(value)}
-        _ -> {:register, value}
-      end
-    end
-
-    defp execute_instruction(["set", :register, registera, :number, valueb], registers, _, _),
-      do: {:registers, Map.put(registers, registera, valueb)}
-
-    defp execute_instruction(["mul", :register, registera, :number, valueb], registers, _, _),
-      do: {:registers, Map.update(registers, registera, 0, &(&1 * valueb))}
-
-    defp execute_instruction(["add", :register, registera, :number, valueb], registers, _, _),
-      do: {:registers, Map.update(registers, registera, valueb, &(&1 + valueb))}
-
-    defp execute_instruction(["mod", :register, registera, :number, valueb], registers, _, _),
-      do: {:registers, Map.update(registers, registera, valueb, &rem(&1, valueb))}
-
-    defp execute_instruction(["jgz", :register, registera, :number, valueb], registers, _, _) do
-      valuea = Map.get(registers, registera, 0)
-      execute_instruction(["jgz", :number, valuea, :number, valueb], registers, nil, nil)
-    end
-
-    defp execute_instruction(["jgz", :number, valuea, :number, valueb], _, _, _) do
-      if valuea > 0 do
-        {:increase, valueb}
-      else
-        :nothing
-      end
-    end
-
-    defp execute_instruction(["snd", register], registers, _, _) do
-      value = Map.get(registers, register, 0)
-      {:frequency, value}
-    end
-
-    defp execute_instruction(["rcv", _], _, {_, []}, :part2), do: :wait
-
-    defp execute_instruction(["rcv", register], registers, {_, [last | frequencies]}, :part2),
-      do: {:receive, Map.put(registers, register, last), frequencies}
-
-    defp execute_instruction(["rcv", register], registers, {[last | _], _}, :part1) do
-      value = Map.get(registers, register, 0)
-
-      if value === 0 do
-        :nothing
-      else
-        {:sound, last}
-      end
-    end
-
-    defp execute_instruction([name, :register, registera, :register, registerb], registers, _, _) do
-      valueb = Map.get(registers, registerb, 0)
-      execute_instruction([name, :register, registera, :number, valueb], registers, nil, nil)
-    end
+    def process_result(result, pointer, registers, options, callback),
+      do: callback.(result, pointer, registers, options)
   end
 
   defmodule Part1 do
@@ -140,7 +57,34 @@ defmodule Aletopelta.Year2017.Day18 do
     def execute(input, _) do
       input
       |> Common.parse_input()
-      |> Common.process(0, Map.new(), {[], []}, :part1)
+      |> Machine.new(
+        options: %{
+          send: [],
+          process: fn result, pointer, registers, options ->
+            Common.process_result(result, pointer, registers, options, &process_result/4)
+          end,
+          execute: fn instruction, registers, options ->
+            Common.execute_instruction(instruction, registers, options, &execute_instruction/3)
+          end
+        }
+      )
+      |> Machine.start()
+      |> elem(3)
+      |> Map.fetch!(:output)
+    end
+
+    defp execute_instruction(["rcv", register], registers, %{send: [last | _]}) do
+      value = Map.get(registers, register, 0)
+
+      if value === 0 do
+        :nothing
+      else
+        {:scream, last}
+      end
+    end
+
+    defp process_result({:scream, frequency}, pointer, registers, options) do
+      {:pause, pointer, registers, Map.put(options, :output, frequency)}
     end
   end
 
@@ -157,58 +101,99 @@ defmodule Aletopelta.Year2017.Day18 do
 
     defp process(input) do
       0..1
-      |> Map.new(&prepare_machine/1)
-      |> loop_machines(0, input, 0)
+      |> Map.new(&prepare_machine(input, &1))
+      |> loop_machines(0, 0)
     end
 
-    defp prepare_machine(value) do
+    defp prepare_machine(instructions, value) do
       registers = Map.new([{"p", value}])
-      pointer = 0
-      xreceive = []
 
-      {value, {registers, pointer, xreceive}}
+      {value,
+       Machine.new(instructions,
+         registers: registers,
+         options: %{
+           send: [],
+           receive: [],
+           execute: fn instruction, registers, options ->
+             Common.execute_instruction(instruction, registers, options, &execute_instruction/3)
+           end,
+           process: fn result, pointer, registers, options ->
+             Common.process_result(result, pointer, registers, options, &process_result/4)
+           end
+         }
+       )}
     end
 
-    defp loop_machines(machines, index, instructions, sum) do
-      index
-      |> process_machine(machines, instructions)
-      |> continue_process(rem(index + 1, 2), instructions, sum)
+    defp execute_instruction(["rcv", register], registers, %{receive: [frequency | others]}),
+      do: {:receive, Map.put(registers, register, frequency), others}
+
+    defp execute_instruction(["rcv", _], _, %{receive: [], send: xsend}),
+      do: {:receive, Enum.reverse(xsend)}
+
+    defp process_result({:receive, registers, xreceive}, pointer, _, options) do
+      new_options = Map.update!(options, :receive, fn _ -> xreceive end)
+
+      {pointer + 1, registers, new_options}
     end
 
-    defp sum_send(machines, sum) do
-      machines
-      |> Map.fetch!(1)
-      |> elem(2)
-      |> length()
-      |> Kernel.+(sum)
+    defp process_result({:receive, xsend}, pointer, registers, options) do
+      new_options = Map.update!(options, :send, fn _ -> xsend end)
+
+      {:pause, pointer, registers, new_options}
     end
 
-    defp continue_process({machines, {_, _, []}}, index, instructions, sum),
-      do: continue_process({machines, nil}, index, instructions, sum)
+    defp loop_machines(machines, index, sum),
+      do:
+        index
+        |> process_machine(machines)
+        |> continue_process(rem(index + 1, 2), sum)
 
-    defp continue_process({machines, _}, 0 = index, instructions, sum) do
+    defp sum_send(machines, sum),
+      do:
+        machines
+        |> Map.fetch!(1)
+        |> elem(3)
+        |> Map.fetch!(:send)
+        |> length()
+        |> Kernel.+(sum)
+
+    defp continue_process({machines, {_, _, _, %{send: []}}}, index, sum),
+      do: continue_process({machines, nil}, index, sum)
+
+    defp continue_process({machines, _}, 0 = index, sum) do
       new_sum = sum_send(machines, sum)
 
-      loop_machines(machines, index, instructions, new_sum)
+      loop_machines(machines, index, new_sum)
     end
 
-    defp continue_process({machines, nil}, 1, _, sum), do: sum_send(machines, sum)
+    defp continue_process({machines, nil}, 1, sum), do: sum_send(machines, sum)
 
-    defp continue_process({machines, _}, index, instructions, sum),
-      do: loop_machines(machines, index, instructions, sum)
+    defp continue_process({machines, _}, index, sum), do: loop_machines(machines, index, sum)
 
-    defp process_machine(index, machines, instructions) do
+    defp process_machine(index, machines) do
       other_index = rem(index + 1, 2)
 
-      {other_registers, other_pointer, other_send} = Map.fetch!(machines, other_index)
-      {registers, pointer, _} = Map.fetch!(machines, index)
+      {other_instructions, other_pointer, other_registers, %{send: other_send} = other_options} =
+        Map.fetch!(machines, other_index)
 
-      machine = Common.process(instructions, pointer, registers, {[], other_send}, :part2)
+      {instructions, pointer, registers, options} = Map.fetch!(machines, index)
+
+      new_options =
+        options
+        |> Map.update!(:send, fn _ -> [] end)
+        |> Map.update!(:receive, fn _ -> other_send end)
+
+      machine = Machine.start({instructions, pointer, registers, new_options})
+
+      new_otheroptions = Map.update!(other_options, :send, fn _ -> [] end)
 
       new_machines =
         machines
         |> Map.put(index, machine)
-        |> Map.put(other_index, {other_registers, other_pointer, []})
+        |> Map.put(
+          other_index,
+          {other_instructions, other_pointer, other_registers, new_otheroptions}
+        )
 
       {new_machines, machine}
     end
