@@ -35,7 +35,8 @@ defmodule Aletopelta.Year2016.Day09 do
 
       [first, second] = Enum.map([sfirst, ssecond], &String.to_integer/1)
 
-      <<copy::binary-size(first), rest3::binary>> = rest2
+      copy = binary_part(rest2, 0, first)
+      rest3 = binary_part(rest2, first, String.length(rest2) - first)
 
       map
       |> dispatch(copy, second, factor, dispatch)

@@ -32,7 +32,7 @@ defmodule Aletopelta.Year2021.Day16 do
 
     @spec traverse(output()) :: {map(), binary()}
     def traverse(<<v::size(8 * 3), "100", rest::binary>>) do
-      version = String.to_integer(<<v::size(8 * 3)>>, 2)
+      version = String.to_integer("#{<<v::size(8 * 3)>>}", 2)
       type = 4
 
       {binary, new_rest} = traverse_literal(rest)
@@ -42,11 +42,13 @@ defmodule Aletopelta.Year2021.Day16 do
     end
 
     def traverse(<<v::size(8 * 3), t::size(8 * 3), "0", l::size(8 * 15), rest::binary>>) do
-      version = String.to_integer(<<v::size(8 * 3)>>, 2)
-      type = String.to_integer(<<t::size(8 * 3)>>, 2)
-      length = String.to_integer(<<l::size(8 * 15)>>, 2)
+      version = String.to_integer("#{<<v::size(8 * 3)>>}", 2)
+      type = String.to_integer("#{<<t::size(8 * 3)>>}", 2)
+      length = String.to_integer("#{<<l::size(8 * 15)>>}", 2)
 
-      <<sp::size(8 * length), new_rest::binary>> = rest
+      split = fn <<sp::size(8 * ^length), new_rest::binary>> -> {sp, new_rest} end
+      {sp, new_rest} = split.(rest)
+
       sub_packet = <<sp::size(8 * length)>>
 
       sub_packets = traverse_subpacket(sub_packet)
@@ -55,9 +57,9 @@ defmodule Aletopelta.Year2021.Day16 do
     end
 
     def traverse(<<v::size(8 * 3), t::size(8 * 3), "1", l::size(8 * 11), rest::binary>>) do
-      version = String.to_integer(<<v::size(8 * 3)>>, 2)
-      type = String.to_integer(<<t::size(8 * 3)>>, 2)
-      packet_count = String.to_integer(<<l::size(8 * 11)>>, 2)
+      version = String.to_integer("#{<<v::size(8 * 3)>>}", 2)
+      type = String.to_integer("#{<<t::size(8 * 3)>>}", 2)
+      packet_count = String.to_integer("#{<<l::size(8 * 11)>>}", 2)
 
       {sub_packets, new_rest} =
         Enum.map_reduce(1..packet_count, rest, fn _, acc ->
@@ -70,7 +72,7 @@ defmodule Aletopelta.Year2021.Day16 do
     defp traverse_literal(<<"1", g::size(8 * 4), rest::binary>>) do
       {value, new_rest} = traverse_literal(rest)
 
-      {<<g::size(8 * 4)>> <> value, new_rest}
+      {<<g::size(8 * 4), value::binary>>, new_rest}
     end
 
     defp traverse_literal(<<"0", g::size(8 * 4), rest::binary>>) do
